@@ -1,0 +1,6 @@
+# Git / SCM 커밋 메시지 (Generate commit message)
+# Cursor는 커밋 메시지 생성 시 이 파일을 repoContext로 포함합니다. (.cursor/rules/*.mdc는 여기에 자동 포함되지 않습니다.)
+
+- Source Control의 Generate commit message 결과는 항상 한국어로만 작성한다. 영어 문장만으로 제목·본문을 쓰지 않는다.
+- Conventional Commits: type(feat, fix, refactor, docs, test, chore)은 영문 소문자, 콜론 뒤 설명은 한국어. 예: feat: SSO 부트스트랩 모듈 추가
+- 클래스·메서드·파일 경로 등 식별자는 원문(영문) 유지. 한 줄 제목을 기본으로 한다.
