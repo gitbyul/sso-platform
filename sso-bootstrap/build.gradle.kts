@@ -18,6 +18,16 @@ repositories {
 }
 
 dependencies {
+	implementation(project(":sso-shared-kernel"))
+	implementation(project(":sso-identity-context"))
+	implementation(project(":sso-tenant-context"))
+	implementation(project(":sso-client-context"))
+	implementation(project(":sso-authorization-context"))
+	implementation(project(":sso-federation-context"))
+	implementation(project(":sso-session-context"))
+	implementation(project(":sso-key-context"))
+	implementation(project(":sso-audit-context"))
+	implementation(project(":sso-admin-context"))
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
 	testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")

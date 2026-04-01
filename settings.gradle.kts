@@ -1,2 +1,12 @@
 rootProject.name = "sso-platform"
 include("sso-bootstrap")
+include("sso-shared-kernel")
+include("sso-identity-context")
+include("sso-tenant-context")
+include("sso-client-context")
+include("sso-authorization-context")
+include("sso-federation-context")
+include("sso-session-context")
+include("sso-key-context")
+include("sso-audit-context")
+include("sso-admin-context")
