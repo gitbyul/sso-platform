@@ -1,13 +1,13 @@
-package com.gitbyul.sso_platform;
+package com.gitbyul.sso_bootstrap;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SsoPlatformApplication {
+public class SsoBootstrapApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SsoPlatformApplication.class, args);
+		SpringApplication.run(SsoBootstrapApplication.class, args);
 	}
 
 }
