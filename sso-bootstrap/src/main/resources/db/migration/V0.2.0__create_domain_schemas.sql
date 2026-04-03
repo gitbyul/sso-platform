@@ -1,3 +1,4 @@
+-- V0.x: BC별 테이블 DDL 전에 스키마 네임스페이스만 준비한다.
 CREATE SCHEMA IF NOT EXISTS tenant;
 CREATE SCHEMA IF NOT EXISTS identity;
 CREATE SCHEMA IF NOT EXISTS client;

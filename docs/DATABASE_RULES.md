@@ -259,7 +259,7 @@ ORDER BY a.schemaname, a.tablename, a.indexname;
 - 이미 적용된 마이그레이션 파일 수정 금지
 - 인덱스 생성은 반드시 명시적 이름 사용 (`idx_*`, `gin_*`, `brin_*`)
 - **테이블·컬럼·제약조건 명명은 §2 및 §0 정렬 원칙 준수**
-- **`public` 스키마:** 앱 객체는 전용 스키마에 두고, `public`에 대한 `CREATE`는 `REVOKE … FROM PUBLIC`로 막는다(`V1.0.2__harden_public_schema_permissions.sql`). `public` 스키마 자체는 삭제하지 않는다(본 문서 도입부·§0와 동일 취지).
+- **`public` 스키마:** 앱 객체는 전용 스키마에 두고, `public`에 대한 `CREATE`는 `REVOKE … FROM PUBLIC`로 막는다(`V0.3.0__harden_public_schema_permissions.sql`). `public` 스키마 자체는 삭제하지 않는다(본 문서 도입부·§0와 동일 취지).
 - 대용량 테이블에 `CREATE INDEX CONCURRENTLY`가 필요하면 별도 마이그레이션 전략 수립
   - (Flyway 트랜잭션 정책과 충돌 가능하므로 사전 검토 필수)
 

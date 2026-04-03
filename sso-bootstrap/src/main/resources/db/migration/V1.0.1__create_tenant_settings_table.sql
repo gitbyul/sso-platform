@@ -1,4 +1,4 @@
--- tenant: TenantSettings / PasswordPolicy JSON (AGENT_SPEC.md §2.2)
+-- V1.0.x: tenant BC — TenantSettings / PasswordPolicy JSON (AGENT_SPEC.md §2.2)
 CREATE TABLE IF NOT EXISTS tenant.tenant_settings (
     tenant_id               VARCHAR(100) PRIMARY KEY
         REFERENCES tenant.tenants (tenant_id) ON DELETE CASCADE,

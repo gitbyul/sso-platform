@@ -161,7 +161,7 @@ dependencies {
 | `TenantSettings` | ValueObject | `passwordPolicy`, `mfaRequired`, `sessionTimeoutMinutes`, `maxConcurrentSessions` |
 | `PasswordPolicy` | ValueObject | `minLength`, `requireUppercase`, `requireNumber`, `requireSpecialChar`, `expiryDays` |
 
-**Flyway 마이그레이션 (tenant 스키마):**
+**Flyway 마이그레이션 (tenant 스키마):** `V0.2.0__create_domain_schemas.sql`에서 `tenant` 스키마 생성 후 아래 테이블 DDL 적용.
 - `V1.0.0__create_tenants_table.sql`
 - `V1.0.1__create_tenant_settings_table.sql`
 
@@ -564,6 +564,9 @@ implementation("org.springframework.cloud:spring-cloud-starter-vault-config")
 **Flyway 마이그레이션 파일 위치:**
 ```
 sso-bootstrap/src/main/resources/db/migration/
+├── V0.1.0__create_shared_schema_and_outbox.sql
+├── V0.2.0__create_domain_schemas.sql
+├── V0.3.0__harden_public_schema_permissions.sql
 ├── V1.0.0__create_tenants_table.sql
 ├── V1.0.1__create_tenant_settings_table.sql
 ├── V2.0.0__create_users_table.sql
@@ -974,10 +977,10 @@ V{컨텍스트번호}.{기능번호}.{수정번호}__{설명}.sql
 
 ### 7.2 컨텍스트별 버전 번호 할당
 
-| 컨텍스트 | 버전 대역 |
+| 구분 | 버전 대역 |
 |---|---|
-| shared (outbox 등) | V0.x.x |
-| sso-tenant-context | V1.x.x |
+| shared(outbox)·플랫폼 부트스트랩(BC별 **빈 스키마** 선행 생성 등) | V0.x.x |
+| sso-tenant-context 테이블 DDL | V1.x.x |
 | sso-identity-context | V2.x.x |
 | sso-client-context | V3.x.x |
 | sso-authorization-context | V4.x.x |

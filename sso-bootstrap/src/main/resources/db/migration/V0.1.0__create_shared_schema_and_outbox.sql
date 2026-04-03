@@ -1,4 +1,4 @@
--- shared: Transactional Outbox (AGENT_SPEC.md §3.3)
+-- V0.x: 플랫폼 공용 인프라. Transactional Outbox (AGENT_SPEC.md §3.3)
 CREATE SCHEMA IF NOT EXISTS shared;
 
 CREATE TABLE IF NOT EXISTS shared.outbox_events (

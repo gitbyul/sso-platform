@@ -69,7 +69,7 @@ docker compose down -v
 | **vault** | `sso-vault` | `8200` | **개발 모드** (`-dev`). 루트 토큰 `root` (운영 금지) |
 | **sso-bootstrap** | `sso-bootstrap` | `8080` | Spring Boot 앱 (`SPRING_PROFILES_ACTIVE=docker`) |
 
-PostgreSQL 초기화 시 [`docker/postgres/init/01-init.sql`](docker/postgres/init/01-init.sql)로 스키마(`tenant`, `identity`, `client`, `audit`)가 생성된다.  
+DB 스키마·테이블은 `sso-bootstrap` 기동 시 Flyway(`classpath:db/migration`)가 적용한다. 도메인 네임스페이스에는 `shared`, `tenant`, `identity`, `client`, `audit` 등이 포함된다.  
 애플리케이션 기동 시 **Flyway**가 [`sso-bootstrap/src/main/resources/db/migration/`](sso-bootstrap/src/main/resources/db/migration/)의 스크립트를 적용한다(`shared`·`tenant` 테이블 등). `shared` 스키마는 Flyway에서만 생성된다.
 
 ---

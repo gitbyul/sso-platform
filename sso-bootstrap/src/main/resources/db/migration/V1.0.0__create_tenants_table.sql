@@ -1,6 +1,4 @@
--- tenant: Tenant aggregate (AGENT_SPEC.md §2.2)
-CREATE SCHEMA IF NOT EXISTS tenant;
-
+-- V1.0.x: tenant BC — Tenant aggregate (AGENT_SPEC.md §2.2)
 CREATE TABLE IF NOT EXISTS tenant.tenants (
     tenant_id  VARCHAR(100) PRIMARY KEY,
     name       VARCHAR(255) NOT NULL,
