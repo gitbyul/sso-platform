@@ -329,7 +329,7 @@ sso-bootstrap
 
 | 서비스 | 이미지 | 포트 | 용도 |
 |---|---|---|---|
-| postgres | postgres:16-alpine | 5432 | 도메인 데이터, 감사 로그 |
+| postgres | postgres:16-alpine | 호스트 **5433** (→ 컨테이너 5432) | 도메인 데이터, 감사 로그. 앱·도구는 `127.0.0.1:5433` |
 | redis | redis:7-alpine | 6379 | 세션, 이벤트 스트림, 캐시 |
 | vault | hashicorp/vault:1.16 | 8200 | 시크릿, JWT 키 관리 |
 | sso-bootstrap | 로컬 빌드 | 8080 | 애플리케이션 |

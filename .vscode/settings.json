@@ -1,0 +1,19 @@
+{
+  "sqltools.connections": [
+    {
+      "name": "sso-platform (docker-compose postgres)",
+      "driver": "PostgreSQL",
+      "server": "127.0.0.1",
+      "port": 5433,
+      "database": "sso_platform",
+      "username": "sso",
+      "password": "sso",
+      "connectionTimeout": 60,
+      "connectionMethod": "Hostname/IP Address",
+      "previewLimit": 100,
+      "pgOptions": {
+        "ssl": false
+      }
+    }
+  ]
+}

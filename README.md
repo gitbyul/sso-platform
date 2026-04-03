@@ -64,7 +64,7 @@ docker compose down -v
 
 | 서비스 | 컨테이너명 | 호스트 포트 | 설명 |
 |--------|------------|-------------|------|
-| **postgres** | `sso-postgres` | `5432` | DB `sso_platform`, 사용자 `sso` / 비밀번호 `sso` |
+| **postgres** | `sso-postgres` | **`5433` → 컨테이너 `5432`** | DB `sso_platform`, 사용자 `sso` / 비밀번호 `sso`. 호스트·SQLTools·로컬 앱은 **`127.0.0.1:5433`** |
 | **redis** | `sso-redis` | `6379` | AOF 활성화 |
 | **vault** | `sso-vault` | `8200` | **개발 모드** (`-dev`). 루트 토큰 `root` (운영 금지) |
 | **sso-bootstrap** | `sso-bootstrap` | `8080` | Spring Boot 앱 (`SPRING_PROFILES_ACTIVE=docker`) |
@@ -87,7 +87,7 @@ PostgreSQL 초기화 시 [`docker/postgres/init/01-init.sql`](docker/postgres/in
 | `SSO_VAULT_ADDRESS` | `http://vault:8200` |
 | `SSO_VAULT_TOKEN` | `root` |
 
-호스트에서 앱을 띄우고 인프라만 Docker로 쓰는 경우 **`local` 프로필**을 쓴다. [`sso-bootstrap/src/main/resources/application-local.properties`](sso-bootstrap/src/main/resources/application-local.properties)에 `localhost` 기준으로 DB·Redis·Vault URL이 정의되어 있다.
+호스트에서 앱을 띄우고 인프라만 Docker로 쓰는 경우 **`local` 프로필**을 쓴다. [`sso-bootstrap/src/main/resources/application-local.properties`](sso-bootstrap/src/main/resources/application-local.properties)에 DB(**게시 포트 `5433`**), Redis, Vault URL이 정의되어 있다.
 
 ---
 
@@ -99,7 +99,7 @@ PostgreSQL 초기화 시 [`docker/postgres/init/01-init.sql`](docker/postgres/in
 docker compose up -d postgres redis vault
 ```
 
-이후 로컬 앱의 DB URL은 `jdbc:postgresql://localhost:5432/sso_platform` 등으로 맞춘다.
+이후 로컬 앱의 DB URL은 `jdbc:postgresql://127.0.0.1:5433/sso_platform` (`application-local.properties`와 동일)으로 맞춘다.
 
 ---
 
@@ -138,8 +138,8 @@ docker compose up -d postgres redis vault
 
 ## 문제 해결
 
-- **포트 충돌:** 이미 `5432`, `6379`, `8200`, `8080`을 쓰는 프로세스가 있으면 `docker-compose.yml`의 `ports` 매핑을 변경한다.
-- **PostgreSQL `28P01` / 사용자 `sso` 비밀번호 인증 실패:** 앱이 **Docker의 `sso-postgres`가 아닌 다른 PostgreSQL**(로컬 설치 등)에 붙었을 때 자주 난다. 호스트에서 `5432`를 점유한 프로세스를 확인하고, `docker compose ps`로 `sso-postgres`가 떠 있는지 본다. 컨테이너가 맞다면 아래로 접속이 되어야 한다.  
+- **포트 충돌:** 호스트 PostgreSQL 기본 포트(`5432`)와 겹치지 않도록 **게시 포트는 `5433`**이다. `6379`, `8200`, `8080` 등이 겹치면 `docker-compose.yml`의 `ports`를 조정하고, DB 게시 포트를 바꿨다면 `application-local.properties`, SQLTools `.vscode/settings.json`, `application-test.properties`의 포트도 같이 맞춘다.
+- **PostgreSQL `28P01` / 사용자 `sso` 비밀번호 인증 실패 (SQLTools 포함):** 앱·클라이언트가 **Docker의 `sso-postgres`가 아닌 다른 PostgreSQL**(로컬 설치 등)에 붙었을 때 자주 난다. 로컬에서는 **`127.0.0.1:5433`**으로 붙어야 한다. `docker compose ps`로 `sso-postgres`가 떠 있는지 본다. 컨테이너가 맞다면 아래로 접속이 되어야 한다.  
   `docker exec -it sso-postgres psql -U sso -d sso_platform -c 'select 1'`  
   예전에 다른 계정으로 초기화된 **`postgres_data` 볼륨**이면 `POSTGRES_USER`/`POSTGRES_PASSWORD`가 다시 적용되지 않는다. 개발용으로 DB를 비워도 된다면 `docker compose down -v` 후 `docker compose up -d postgres redis vault`로 볼륨을 새로 만든다. 포트만 바꿨다면 `application-local.properties`의 JDBC URL 포트도 같이 맞춘다.  
   OS·터미널에 **`SPRING_DATASOURCE_*` 환경 변수**가 남아 있으면 `application-local.properties`보다 우선한다. 잘못된 값이면 제거하거나 올바른 값으로 맞춘다.
