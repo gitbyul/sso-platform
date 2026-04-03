@@ -2,7 +2,13 @@
 
 엔터프라이즈 멀티테넌트 SSO 플랫폼 (Spring Boot, PostgreSQL, Redis, Vault).
 
-상세 아키텍처·개발 로드맵은 [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md), 구현 규격은 [`docs/AGENT_SPEC.md`](docs/AGENT_SPEC.md)를 참고한다.
+| 문서 | 용도 |
+|------|------|
+| [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md) | 로드맵, ADR, Phase |
+| [`docs/AGENT_SPEC.md`](docs/AGENT_SPEC.md) | 구현 강제 규격 (에이전트·코드 기준) |
+| [`docs/DATABASE_RULES.md`](docs/DATABASE_RULES.md) | PostgreSQL 명명(§0·§2)·인덱스·제약조건·모니터링 |
+
+**우선순위:** 구현·보안·코드 구조는 `AGENT_SPEC.md`가 우선. DB 객체 명명·인덱스 설계는 `DATABASE_RULES.md` §0·§2가 우선. 로드맵과 상충 시 `DEVELOPMENT_PLAN.md`를 `AGENT_SPEC.md`에 맞게 갱신한다.
 
 ---
 
@@ -63,7 +69,8 @@ docker compose down -v
 | **vault** | `sso-vault` | `8200` | **개발 모드** (`-dev`). 루트 토큰 `root` (운영 금지) |
 | **sso-bootstrap** | `sso-bootstrap` | `8080` | Spring Boot 앱 (`SPRING_PROFILES_ACTIVE=docker`) |
 
-PostgreSQL 초기화 시 [`docker/postgres/init/01-init.sql`](docker/postgres/init/01-init.sql)로 스키마(`tenant`, `identity`, `client`, `audit`)가 생성된다.
+PostgreSQL 초기화 시 [`docker/postgres/init/01-init.sql`](docker/postgres/init/01-init.sql)로 스키마(`tenant`, `identity`, `client`, `audit`)가 생성된다.  
+애플리케이션 기동 시 **Flyway**가 [`sso-bootstrap/src/main/resources/db/migration/`](sso-bootstrap/src/main/resources/db/migration/)의 스크립트를 적용한다(`shared`·`tenant` 테이블 등). `shared` 스키마는 Flyway에서만 생성된다.
 
 ---
 
