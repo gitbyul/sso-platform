@@ -1,6 +1,8 @@
 package com.gitbyul.shared.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.gitbyul.shared.i18n.SsoRequestLocaleResolver;
 import com.gitbyul.shared.outbox.OutboxPoller;
 import com.gitbyul.shared.tenant.MdcPropagationFilter;
 import com.gitbyul.shared.tenant.TenantJwtValidationFilter;
@@ -9,11 +11,13 @@ import com.gitbyul.shared.util.RandomIdGenerator;
 import com.gitbyul.shared.util.SystemTimeProvider;
 import com.gitbyul.shared.util.TimeProvider;
 import jakarta.persistence.EntityManager;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -42,8 +46,18 @@ public class SharedKernelAutoConfiguration {
     }
 
     @Bean
-    public TenantResolutionFilter tenantResolutionFilter(Environment environment, ObjectMapper objectMapper) {
-        return new TenantResolutionFilter(environment, objectMapper);
+    @ConditionalOnMissingBean
+    public ObjectMapper objectMapper() {
+        return JsonMapper.builder().build();
+    }
+
+    @Bean
+    public TenantResolutionFilter tenantResolutionFilter(
+            Environment environment,
+            ObjectMapper objectMapper,
+            ObjectProvider<MessageSource> messageSource,
+            ObjectProvider<SsoRequestLocaleResolver> localeResolver) {
+        return new TenantResolutionFilter(environment, objectMapper, messageSource, localeResolver);
     }
 
     @Bean
@@ -56,8 +70,11 @@ public class SharedKernelAutoConfiguration {
             ApplicationEventPublisher publisher,
             ObjectMapper objectMapper,
             RandomIdGenerator randomIdGenerator,
-            TimeProvider timeProvider) {
-        return new TenantJwtValidationFilter(publisher, objectMapper, randomIdGenerator, timeProvider);
+            TimeProvider timeProvider,
+            ObjectProvider<MessageSource> messageSource,
+            ObjectProvider<SsoRequestLocaleResolver> localeResolver) {
+        return new TenantJwtValidationFilter(
+                publisher, objectMapper, randomIdGenerator, timeProvider, messageSource, localeResolver);
     }
 
     @Bean

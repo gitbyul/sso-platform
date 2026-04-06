@@ -3,10 +3,15 @@ package com.gitbyul.shared.tenant;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gitbyul.shared.audit.AuditEvent;
+import com.gitbyul.shared.exception.ErrorCode;
+import com.gitbyul.shared.i18n.SsoRequestLocaleResolver;
 import com.gitbyul.shared.util.RandomIdGenerator;
 import com.gitbyul.shared.util.TimeProvider;
+import com.gitbyul.shared.web.error.ApiErrorResponses;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.MessageSource;
 import org.springframework.core.Ordered;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -17,6 +22,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -37,16 +43,22 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
     private final ObjectMapper objectMapper;
     private final RandomIdGenerator idGenerator;
     private final TimeProvider timeProvider;
+    private final ObjectProvider<MessageSource> messageSource;
+    private final ObjectProvider<SsoRequestLocaleResolver> localeResolver;
 
     public TenantJwtValidationFilter(
             ApplicationEventPublisher publisher,
             ObjectMapper objectMapper,
             RandomIdGenerator idGenerator,
-            TimeProvider timeProvider) {
+            TimeProvider timeProvider,
+            ObjectProvider<MessageSource> messageSource,
+            ObjectProvider<SsoRequestLocaleResolver> localeResolver) {
         this.publisher = publisher;
         this.objectMapper = objectMapper;
         this.idGenerator = idGenerator;
         this.timeProvider = timeProvider;
+        this.messageSource = messageSource;
+        this.localeResolver = localeResolver;
     }
 
     @Override
@@ -68,7 +80,35 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
         }
 
         publishTenantMismatchAuditEvent(request, jwtTenantId, holderTenantId, jwtPayload);
-        response.sendError(403, "Forbidden");
+        writeTenantMismatch(request, response);
+    }
+
+    private void writeTenantMismatch(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        MessageSource ms = messageSource.getIfAvailable();
+        SsoRequestLocaleResolver lr = localeResolver.getIfAvailable();
+        if (ms != null && lr != null) {
+            ApiErrorResponses.writeJson(
+                    response,
+                    objectMapper,
+                    ms,
+                    lr.resolveLocale(request),
+                    ErrorCode.TENANT_MISMATCH,
+                    ErrorCode.TENANT_MISMATCH.httpStatus().value());
+            return;
+        }
+        if (ms != null) {
+            ApiErrorResponses.writeJson(
+                    response,
+                    objectMapper,
+                    ms,
+                    Locale.getDefault(),
+                    ErrorCode.TENANT_MISMATCH,
+                    ErrorCode.TENANT_MISMATCH.httpStatus().value());
+            return;
+        }
+        response.sendError(
+                ErrorCode.TENANT_MISMATCH.httpStatus().value(), ErrorCode.TENANT_MISMATCH.code());
     }
 
     private void publishTenantMismatchAuditEvent(

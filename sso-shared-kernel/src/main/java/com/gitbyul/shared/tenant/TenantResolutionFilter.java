@@ -2,7 +2,12 @@ package com.gitbyul.shared.tenant;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gitbyul.shared.exception.ErrorCode;
+import com.gitbyul.shared.i18n.SsoRequestLocaleResolver;
+import com.gitbyul.shared.web.error.ApiErrorResponses;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.MessageSource;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -13,6 +18,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -39,10 +45,18 @@ public class TenantResolutionFilter extends OncePerRequestFilter implements Orde
 
     private final Environment environment;
     private final ObjectMapper objectMapper;
+    private final ObjectProvider<MessageSource> messageSource;
+    private final ObjectProvider<SsoRequestLocaleResolver> localeResolver;
 
-    public TenantResolutionFilter(Environment environment, ObjectMapper objectMapper) {
+    public TenantResolutionFilter(
+            Environment environment,
+            ObjectMapper objectMapper,
+            ObjectProvider<MessageSource> messageSource,
+            ObjectProvider<SsoRequestLocaleResolver> localeResolver) {
         this.environment = environment;
         this.objectMapper = objectMapper;
+        this.messageSource = messageSource;
+        this.localeResolver = localeResolver;
     }
 
     @Override
@@ -72,7 +86,7 @@ public class TenantResolutionFilter extends OncePerRequestFilter implements Orde
             }
 
             if (tenantId == null || !isValidTenantId(tenantId)) {
-                response.sendError(400, "Tenant not identified");
+                writeTenantNotIdentified(request, response);
                 return;
             }
 
@@ -137,5 +151,34 @@ public class TenantResolutionFilter extends OncePerRequestFilter implements Orde
     private String tenantIdFromJwt(HttpServletRequest request) {
         JsonNode payload = JwtBearerPayloadSupport.readPayload(objectMapper, request);
         return JwtBearerPayloadSupport.claimAsText(payload, "tenant_id");
+    }
+
+    private void writeTenantNotIdentified(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        MessageSource ms = messageSource.getIfAvailable();
+        SsoRequestLocaleResolver lr = localeResolver.getIfAvailable();
+        if (ms != null && lr != null) {
+            ApiErrorResponses.writeJson(
+                    response,
+                    objectMapper,
+                    ms,
+                    lr.resolveLocale(request),
+                    ErrorCode.TENANT_NOT_IDENTIFIED,
+                    ErrorCode.TENANT_NOT_IDENTIFIED.httpStatus().value());
+            return;
+        }
+        if (ms != null) {
+            ApiErrorResponses.writeJson(
+                    response,
+                    objectMapper,
+                    ms,
+                    Locale.getDefault(),
+                    ErrorCode.TENANT_NOT_IDENTIFIED,
+                    ErrorCode.TENANT_NOT_IDENTIFIED.httpStatus().value());
+            return;
+        }
+        response.sendError(
+                ErrorCode.TENANT_NOT_IDENTIFIED.httpStatus().value(),
+                ErrorCode.TENANT_NOT_IDENTIFIED.code());
     }
 }
