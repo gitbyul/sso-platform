@@ -1,0 +1,22 @@
+---
+description: sso-audit-context 구현 규칙
+globs: sso-audit-context/**/*.java
+alwaysApply: false
+---
+
+# 저장 파이프라인
+
+- 감사 저장은 `@TransactionalEventListener(AFTER_COMMIT)` + `@Async` 패턴을 사용한다.
+- 저장 실패 예외는 비즈니스 트랜잭션으로 전파하지 않는다.
+- 실패 시 `sso.audit.persistence.failures` 메트릭을 증가시킨다.
+- 연속 실패 임계치 초과 시 `SECURITY.AUDIT_PIPELINE_DEGRADED`를 별도 경로에 기록한다.
+
+# 조회/API
+
+- Query는 `@Transactional(readOnly = true)` + Native SQL로 구현한다.
+- 감사 다운로드는 스트리밍으로 제공하고 관리자 rate limit을 강제한다.
+- 권한은 `ROLE_SUPER_ADMIN` 전역, `ROLE_TENANT_ADMIN` 본인 테넌트로 분리한다.
+
+# 마이그레이션
+
+- Audit 테이블/인덱스/불변 규칙은 V7.x.x 대역으로 관리한다.

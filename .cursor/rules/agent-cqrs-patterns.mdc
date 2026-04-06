@@ -1,0 +1,18 @@
+---
+description: CQRS Command/Query 구현 규칙
+globs: **/*.java
+alwaysApply: false
+---
+
+# Command 규칙
+
+- Command UseCase 반환값은 ID 또는 `void`만 허용한다.
+- Command 객체는 Java record + Bean Validation을 기본으로 한다.
+- Command 경로에서 조회 중심 로직을 혼합하지 않는다.
+
+# Query 규칙
+
+- Query UseCase 반환값은 DTO 또는 `Page<DTO>`로 제한한다.
+- Query 핸들러는 `@Transactional(readOnly = true)`를 강제한다.
+- Query는 Native SQL 또는 JOOQ를 사용한다.
+- Query 경로에서 상태 변경/Dirty Checking 유발 코드는 금지한다.

@@ -1,0 +1,28 @@
+---
+description: 메트릭, Actuator, MDC, JSON 로그 규칙
+globs: **/*.{java,properties,yml,xml}
+alwaysApply: false
+---
+
+# 메트릭
+
+- `sso.auth.attempts`, `sso.auth.duration`, `sso.token.issued`, `sso.token.revoked`
+- `sso.session.active`, `sso.mfa.challenges`, `sso.login.failures`
+- `sso.key.rotations`, `sso.rate_limit.exceeded`, `sso.audit.persistence.failures`
+- 태그는 최소 `tenant`와 도메인별 핵심 차원을 포함한다.
+
+# Actuator
+
+- `management.server.port=8081`로 분리한다.
+- 노출 엔드포인트는 `health,info,prometheus,metrics,loggers` 중심으로 제한한다.
+- 내부망 접근 제어 정책과 함께 운영한다.
+
+# MDC
+
+- 표준 키: `traceId`, `spanId`, `tenantId`, `userId`, `clientId`
+- 임의 MDC 키 추가를 피하고 표준 키만 사용한다.
+
+# 로그 포맷
+
+- `docker`/`production` 프로파일에서 JSON 로그를 사용한다.
+- `local`에서는 개발 생산성을 위해 텍스트 로그를 유지한다.

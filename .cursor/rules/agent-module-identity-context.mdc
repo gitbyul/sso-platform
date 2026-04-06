@@ -1,0 +1,22 @@
+---
+description: sso-identity-context 구현 규칙
+globs: sso-identity-context/**/*.java
+alwaysApply: false
+---
+
+# 도메인
+
+- `User`, `Credential`, `MfaEnrollment`, `UserRole` 경계를 유지한다.
+- 계정 상태(`ACTIVE/LOCKED/DEACTIVATED`)와 실패 횟수 정책을 도메인 규칙으로 명시한다.
+
+# 보안
+
+- 패스워드는 Argon2id 기반 `DelegatingPasswordEncoder`를 사용한다.
+- MFA secret은 Vault Transit 암호화 후 저장한다.
+- MFA backup code는 Argon2id 해시 저장, 재사용 불가 처리한다.
+- secret/backup code를 감사 로그에 포함하지 않는다.
+
+# 유스케이스
+
+- `RegisterUserUseCase`, `AuthenticateUserUseCase`, `ChangePasswordUseCase`, `EnrollMfaUseCase`, `LockUserUseCase`
+- 잠금 임계치 초과 시 `UserLockedEvent`를 발행한다.

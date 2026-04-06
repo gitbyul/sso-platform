@@ -1,0 +1,21 @@
+---
+description: sso-tenant-context 구현 규칙
+globs: sso-tenant-context/**/*.java
+alwaysApply: false
+---
+
+# 도메인
+
+- `Tenant` Aggregate와 `TenantSettings`/`PasswordPolicy` ValueObject를 중심으로 구현한다.
+- 테넌트 상태(`ACTIVE/SUSPENDED/DELETED`) 전이는 UseCase에서 명시적으로 처리한다.
+
+# 유스케이스
+
+- `CreateTenantUseCase` -> `TenantCreatedEvent`
+- `UpdateTenantStatusUseCase` -> `TenantStatusChangedEvent`
+- Query는 `GetTenantQuery`, `ListTenantsQuery`로 분리한다.
+
+# 데이터/마이그레이션
+
+- 버전 대역은 V1.x.x를 사용한다.
+- DDL 명명/인덱스/제약조건은 `docs/DATABASE_RULES.md`를 따른다.

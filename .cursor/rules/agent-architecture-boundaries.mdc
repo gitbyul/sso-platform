@@ -1,0 +1,33 @@
+---
+description: 패키지 구조, 네이밍, 경계 규칙
+globs: **/*.java
+alwaysApply: false
+---
+
+# 패키지 구조
+
+- 컨텍스트 모듈은 `command` / `query` / `config` 구조를 유지한다.
+- `command`는 `application/usecase`, `application/handler`, `domain`, `infrastructure` 계층을 분리한다.
+- `query`는 `application/usecase`, `model`, `infrastructure/repository`를 유지한다.
+- Query 저장소는 Native SQL 또는 JOOQ를 사용하고 JPA Entity 조회를 금지한다.
+
+# 네이밍 규칙
+
+- Aggregate Root: `{명사}`
+- Domain Event: `{과거형동사}Event`
+- UseCase: `{동사}{명사}UseCase`
+- Command Handler: `{동사}{명사}CommandHandler`
+- Query: `Get{명사}Query` 또는 `List{명사}Query`
+- Repository 포트: `{명사}Repository`
+- JPA 리포지토리: `{명사}JpaRepository`
+- JPA 엔티티: `{명사}JpaEntity`
+- 어댑터: `{명사}RepositoryAdapter`
+- Read DTO: `{명사}SummaryDto` 또는 `{명사}DetailDto`
+
+# 금지 패턴
+
+- Command 핸들러에서 조회 로직 혼입 금지
+- Query 핸들러에서 상태 변경 금지 (`@Transactional(readOnly = true)` 강제)
+- 컨텍스트 모듈 간 직접 의존 금지
+- JPA Entity의 도메인 레이어 노출 금지
+- `@SpringBootApplication`은 `sso-bootstrap`에만 허용

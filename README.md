@@ -2,13 +2,15 @@
 
 엔터프라이즈 멀티테넌트 SSO 플랫폼 (Spring Boot, PostgreSQL, Redis, Vault).
 
-| 문서 | 용도 |
-|------|------|
+| 문서·경로 | 용도 |
+|-----------|------|
+| [`AGENTS.md`](AGENTS.md) | 에이전트·구현 규칙 **진입점** (우선순위·규칙 인덱스·구 `AGENT_SPEC` 섹션 매핑) |
+| [`.cursor/rules/`](.cursor/rules/) | Cursor용 세부 규칙 (모듈별·공통 패턴 `.mdc`, 파일/경로별 `globs` 적용) |
+| [`.cursor/rules/tdd-strict.mdc`](.cursor/rules/tdd-strict.mdc) | 테스트 전략 통합 (TDD, Testcontainers, 보안 회귀, Stub/Fake) |
+| [`docs/DATABASE_RULES.md`](docs/DATABASE_RULES.md) | PostgreSQL 명명(§0·§2)·인덱스·제약조건·모니터링 SQL |
 | [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md) | 로드맵, ADR, Phase |
-| [`docs/AGENT_SPEC.md`](docs/AGENT_SPEC.md) | 구현 강제 규격 (에이전트·코드 기준) |
-| [`docs/DATABASE_RULES.md`](docs/DATABASE_RULES.md) | PostgreSQL 명명(§0·§2)·인덱스·제약조건·모니터링 |
 
-**우선순위:** 구현·보안·코드 구조는 `AGENT_SPEC.md`가 우선. DB 객체 명명·인덱스 설계는 `DATABASE_RULES.md` §0·§2가 우선. 로드맵과 상충 시 `DEVELOPMENT_PLAN.md`를 `AGENT_SPEC.md`에 맞게 갱신한다.
+**우선순위:** 구현·보안·코드 구조는 `AGENTS.md`와 `.cursor/rules/*.mdc`가 우선한다. DDL 객체 명명·인덱스·제약은 [`docs/DATABASE_RULES.md`](docs/DATABASE_RULES.md) §0·§2가 우선한다. 로드맵 문구가 규칙과 어긋나면 `DEVELOPMENT_PLAN.md`를 `AGENTS.md` 기준으로 맞춘다.
 
 ---
 

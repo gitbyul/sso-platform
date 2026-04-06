@@ -1,0 +1,27 @@
+---
+description: sso-federation-context 구현 규칙
+globs: sso-federation-context/**/*.java
+alwaysApply: false
+---
+
+# 도메인
+
+- `IdentityProvider`, `FederatedIdentity`, `AttributeMapping` 모델을 사용한다.
+- 외부 Subject와 내부 User 연결 시 링크 감사 이벤트를 남긴다.
+
+# OIDC 보안
+
+- `state`, `nonce`는 생성/검증을 모두 강제한다.
+- ID Token의 `iss`, `aud`, `exp`, `nonce`를 검증한다.
+- nonce 재사용 요청은 거부한다.
+
+# SAML 보안
+
+- `InResponseTo` 검증, Assertion 서명 검증을 강제한다.
+- `NotBefore`, `NotOnOrAfter` 검증과 clock skew(최대 120초) 정책을 적용한다.
+
+# IdP 메타데이터/링크
+
+- 인증서 핀닝과 주기적 갱신(24시간)을 운영한다.
+- 인증서 변경 감지 시 `FEDERATION.IDP_CERT_ROTATED`를 발행한다.
+- 최초 계정 링크는 재인증을 요구한다.

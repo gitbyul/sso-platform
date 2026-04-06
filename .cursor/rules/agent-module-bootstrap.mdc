@@ -1,0 +1,19 @@
+---
+description: sso-bootstrap 실행/조합 모듈 규칙
+globs: sso-bootstrap/**/*
+alwaysApply: false
+---
+
+# 역할
+
+- `sso-bootstrap`은 실행 진입점이며 비즈니스 로직을 넣지 않는다.
+- 컨텍스트 모듈 조합, 설정, 운영 구성만 담당한다.
+
+# 필수 의존성 범주
+
+- Actuator/Prometheus/OpenTelemetry/Logstash/Flyway/Vault 구성 의존성을 유지한다.
+- Flyway 마이그레이션은 이 모듈의 `db/migration` 경로로 고정한다.
+
+# 운영 규칙
+
+- 로그 포맷/Actuator 포트/보안 필터 순서 등 런타임 통합 설정은 이 모듈에서 조정한다.

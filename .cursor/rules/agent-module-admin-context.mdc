@@ -1,0 +1,20 @@
+---
+description: sso-admin-context 구현 규칙
+globs: sso-admin-context/**/*.java
+alwaysApply: false
+---
+
+# Admin FilterChain 소유권
+
+- `/admin/**` 경로는 이 모듈의 Order=2 체인이 단독 소유한다.
+- Admin 전용 JWT만 허용하고 일반 사용자 토큰은 거부한다.
+
+# 권한 정책
+
+- 허용 역할: `ROLE_SUPER_ADMIN`, `ROLE_TENANT_ADMIN`
+- `ROLE_TENANT_ADMIN`은 반드시 본인 테넌트 범위로 제한한다.
+- `ROLE_USER`는 admin API 접근 불가다.
+
+# API 원칙
+
+- 관리자 API는 테넌트/사용자/클라이언트 관리를 통합하되, 테넌트 경계를 깨지 않는다.

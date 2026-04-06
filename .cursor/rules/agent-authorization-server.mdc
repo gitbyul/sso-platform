@@ -1,0 +1,27 @@
+---
+description: Spring Authorization Server 연동 규칙
+globs: **/*Security*.java
+alwaysApply: false
+---
+
+# SecurityFilterChain 경로/순서
+
+- Order=1: Authorization Server (`/oauth2/**`, `/.well-known/**`, `/userinfo`)
+- Order=2: Admin 체인 (`/admin/**`)은 `sso-admin-context` 소유
+- Order=3: Resource Server (`/api/**`)
+
+# RegisteredClient 어댑터
+
+- `SpringRegisteredClientAdapter`가 `RegisteredClientRepository`를 구현한다.
+- `findByClientId`는 `OAuthClient -> RegisteredClient` 변환을 수행한다.
+- `save(RegisteredClient)`는 사용하지 않는다. 클라이언트 등록은 Admin API로 처리한다.
+
+# 토큰 커스터마이징
+
+- Access/ID Token에 `tenant_id`를 포함한다.
+- `roles`, `mfa_verified`, `amr` 클레임을 시나리오에 맞게 포함한다.
+- issuer는 테넌트별 동적 URI 패턴을 유지한다.
+
+# PKCE
+
+- 모든 `authorization_code` 클라이언트는 `requireProofKey(true)`를 강제한다.

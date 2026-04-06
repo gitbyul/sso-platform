@@ -1,0 +1,23 @@
+---
+description: 테넌트 식별, 필터, JWT 바인딩 규칙
+globs: **/*Tenant*.java
+alwaysApply: false
+---
+
+# TenantResolutionFilter
+
+- 테넌트 식별은 서브도메인을 우선으로 한다.
+- local/dev에서만 `X-Tenant-ID` 헤더 fallback을 허용한다.
+- production에서는 fallback 없이 식별 실패 시 `400`을 반환한다.
+- `/.well-known/**`, `/actuator/**` 예외 경로는 스킵 정책을 명시한다.
+
+# TenantContextHolder / MDC
+
+- 요청 시작 시 `TenantContextHolder.set(tenantId)`와 `MDC.put("tenantId", tenantId)`를 수행한다.
+- 요청 종료 시 `finally` 블록에서 반드시 clear/remove 한다.
+
+# JWT-테넌트 바인딩
+
+- JWT `tenant_id`와 `TenantContextHolder.get()` 값은 반드시 일치해야 한다.
+- 불일치 시 `403`과 `SECURITY.TENANT_MISMATCH` 감사 이벤트를 기록한다.
+- `resourceServerFilterChain`과 `adminFilterChain`에서 JWT 인증 후 검증한다.

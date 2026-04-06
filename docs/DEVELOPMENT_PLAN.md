@@ -1,7 +1,7 @@
 # SSO Platform 개발 계획서
 
 > 대상 독자: 개발자 (프로젝트 진행 상황 추적 및 의사결정 근거 참조)
-> 최종 업데이트: 2026-04-03 (AGENT_SPEC.md 보안 명세와 동기화)
+> 최종 업데이트: 2026-04-03 (AGENTS.md 및 `.cursor/rules` 구조와 동기화)
 
 ---
 
@@ -42,10 +42,10 @@ OAuth 2.0 / OIDC 표준을 완전 준수하며, 테넌트별 독립적인 인증
 | 문서 | 역할 |
 |------|------|
 | 본 문서 (`DEVELOPMENT_PLAN.md`) | 로드맵, ADR, Phase, 운영 관점 |
-| [`AGENT_SPEC.md`](./AGENT_SPEC.md) | 구현 강제 규칙·보안·모듈·Flyway 파일 위치 |
+| [`AGENTS.md`](../AGENTS.md) | 구현 강제 규칙 진입점(세부는 `.cursor/rules/*.mdc`) |
 | [`DATABASE_RULES.md`](./DATABASE_RULES.md) | PostgreSQL 명명(§0 산업 관행·§2 강제), 인덱스·제약조건, 모니터링 SQL |
 
-- 구현·보안·코드 구조가 상충하면 **`AGENT_SPEC.md`**를 따른다.
+- 구현·보안·코드 구조가 상충하면 **`AGENTS.md` + `.cursor/rules/*.mdc`**를 따른다.
 - DDL·인덱스·제약조건 이름·운영 점검 쿼리는 **`DATABASE_RULES.md`** §0·§2를 따른다. (Flyway 스크립트 작성 시 필수 참조)
 
 ---
@@ -82,7 +82,7 @@ OAuth 2.0 / OIDC 표준을 완전 준수하며, 테넌트별 독립적인 인증
 - `sso-client-context`는 `RegisteredClientRepository` 어댑터를 구현하여 Spring Authorization Server에 제공
 - `sso-key-context`는 `JWKSource` 어댑터를 구현하여 Vault Transit 키를 노출
 - 다중 `SecurityFilterChain`은 명시적 `@Order`로 우선순위를 지정 (Authorization Server가 가장 높음)
-- `sso-authorization-context`는 Order=1(Authorization Server), Order=3(Resource Server)만 정의. Order=2(Admin, `/admin/**`)의 `SecurityFilterChain` Bean은 `sso-admin-context`에서 정의한다 (상세: `docs/AGENT_SPEC.md` 2.5, 2.10)
+- `sso-authorization-context`는 Order=1(Authorization Server), Order=3(Resource Server)만 정의. Order=2(Admin, `/admin/**`)의 `SecurityFilterChain` Bean은 `sso-admin-context`에서 정의한다 (상세: `.cursor/rules/agent-module-authorization-context.mdc`, `.cursor/rules/agent-module-admin-context.mdc`)
 
 ---
 
@@ -115,7 +115,7 @@ OAuth 2.0 / OIDC 표준을 완전 준수하며, 테넌트별 독립적인 인증
 - Okta, Auth0, Keycloak 등 업계 표준이 서브도메인 방식 채택
 - 운영에서 임의 `X-Tenant-ID` 스푸핑을 막기 위해 헤더 Fallback을 제한한다
 
-**구현 규칙:** (`docs/AGENT_SPEC.md` 섹션 3.4가 상세 근거)
+**구현 규칙:** (`.cursor/rules/agent-tenancy-and-filters.mdc`가 상세 근거)
 - `TenantResolutionFilter`가 요청마다 테넌트 추출 → `TenantContextHolder` 저장 → MDC `tenantId` 주입
 - 서브도메인 추출: `request.getServerName()` 기준 첫 세그먼트 (로컬·IP 호스트는 서브도메인 없음)
 - **local/dev:** 서브도메인 실패 시 `X-Tenant-ID` 헤더 Fallback 허용
@@ -134,7 +134,7 @@ OAuth 2.0 / OIDC 표준을 완전 준수하며, 테넌트별 독립적인 인증
 - `OutboxPoller`가 미발행 이벤트를 폴링하여 Redis Streams에 발행
 - 감사 이벤트 Consumer: Redis Streams → PostgreSQL `audit` 테이블 저장
 - 보안 이벤트 Consumer: Redis Streams → 이상 탐지 룰 엔진
-- 운영 환경 Redis: AUTH·TLS·ACL (`AGENT_SPEC.md` 10.6)
+- 운영 환경 Redis: AUTH·TLS·ACL (`.cursor/rules/agent-security-platform.mdc`)
 
 **Phase 2 — Kafka 도입 (트래픽 증가 시)**
 
@@ -152,10 +152,10 @@ OAuth 2.0 / OIDC 표준을 완전 준수하며, 테넌트별 독립적인 인증
 - `CREATE RULE no_delete_audit AS ON DELETE TO audit.audit_events DO INSTEAD NOTHING`
 - `CREATE RULE no_update_audit AS ON UPDATE TO audit.audit_events DO INSTEAD NOTHING`
 - DB 사용자에게 `INSERT`, `SELECT`만 부여 (`DELETE`, `UPDATE` 권한 없음)
-- 각 이벤트 저장 시 주요 필드에 대한 **HMAC-SHA256** checksum을 함께 저장 (단순 SHA-256 비사용 — `AGENT_SPEC.md` 4.4)
+- 각 이벤트 저장 시 주요 필드에 대한 **HMAC-SHA256** checksum을 함께 저장 (단순 SHA-256 비사용 — `.cursor/rules/agent-audit-spec.mdc`)
 - 키 로테이션: 이전 키로 검증 후 신규 키로 재서명하는 배치 절차
 - `@TransactionalEventListener(phase = AFTER_COMMIT)`로 도메인 트랜잭션 성공 후에만 기록
-- 저장 실패 시 `sso.audit.persistence.failures` 메트릭, 연속 실패 시 `SECURITY.AUDIT_PIPELINE_DEGRADED` 별도 경로 기록 (`AGENT_SPEC.md` 2.8)
+- 저장 실패 시 `sso.audit.persistence.failures` 메트릭, 연속 실패 시 `SECURITY.AUDIT_PIPELINE_DEGRADED` 별도 경로 기록 (`.cursor/rules/agent-module-audit-context.mdc`)
 
 ---
 
@@ -246,7 +246,7 @@ sso-bootstrap
 | 클라이언트 시크릿 로테이션 UseCase | sso-client-context | RotateClientSecretUseCase |
 | Flyway: client 스키마 DDL | sso-bootstrap | V3.x 마이그레이션 |
 | Spring Authorization Server 설정 | sso-authorization-context | AuthorizationServerConfig |
-| SecurityFilterChain Order=1·3 설정 | sso-authorization-context | Authorization Server + Resource Server만 (`AGENT_SPEC.md` 2.5) |
+| SecurityFilterChain Order=1·3 설정 | sso-authorization-context | Authorization Server + Resource Server만 (`.cursor/rules/agent-module-authorization-context.mdc`) |
 | OAuth2TokenCustomizer (tenantId, roles 클레임) | sso-authorization-context | TenantAwareTokenCustomizer |
 | Authorization Code Flow + PKCE 검증 | sso-authorization-context | PKCE 필수 설정 |
 | Client Credentials Flow | sso-authorization-context | M2M 토큰 발급 |
@@ -266,7 +266,7 @@ sso-bootstrap
 | 작업 | 모듈 | 산출물 |
 |---|---|---|
 | SsoSession Aggregate + Redis 저장소 | sso-session-context | SsoSession, SsoSessionRepository |
-| Single Logout (SLO) 트리거 + 백채널 SSRF 방지·HTTPS·등록 `logoutUri`만·토큰 서명 | sso-session-context | PropagateLogoutUseCase (`AGENT_SPEC.md` 2.7) |
+| Single Logout (SLO) 트리거 + 백채널 SSRF 방지·HTTPS·등록 `logoutUri`만·토큰 서명 | sso-session-context | PropagateLogoutUseCase (`.cursor/rules/agent-module-session-context.mdc`) |
 | 동시 세션 수 제한 정책 | sso-session-context | ConcurrentSessionPolicy |
 | 디바이스 정보 + GeoIP 수집 | sso-session-context | DeviceInfo, GeoIpResolver |
 | Flyway: session 메타데이터 테이블 | sso-bootstrap | V5.x 마이그레이션 |
@@ -293,7 +293,7 @@ sso-bootstrap
 | OIDC Provider 연동 (Google, Microsoft Entra ID) | sso-federation-context | OidcFederationConfig |
 | FederatedIdentity 매핑 (외부 ID → 내부 User) | sso-federation-context | FederatedIdentityMapper |
 | 속성 매핑 규칙 설정 (클레임 변환) | sso-federation-context | ClaimTransformationRule |
-| 페더레이션 보안 (OIDC state/nonce, SAML 서명·InResponseTo, IdP 인증서 핀닝, 계정 링크 재인증) | sso-federation-context | `AGENT_SPEC.md` 2.9 준수 |
+| 페더레이션 보안 (OIDC state/nonce, SAML 서명·InResponseTo, IdP 인증서 핀닝, 계정 링크 재인증) | sso-federation-context | `.cursor/rules/agent-module-federation-context.mdc` 준수 |
 | Flyway: federation 스키마 DDL | sso-bootstrap | V8.x 마이그레이션 |
 
 **완료 기준:** Google OIDC 로그인 → 내부 User 생성/연결 → ID Token 발급 E2E 확인
@@ -317,7 +317,7 @@ sso-bootstrap
 | Grafana 대시보드 프로비저닝 | 인프라 | dashboard JSON 4종 |
 | OpenTelemetry 분산 추적 설정 | sso-bootstrap | OtelConfig |
 | Spring Cloud Vault 연동 (AppRole) | sso-bootstrap | VaultConfig |
-| CORS·CSRF·보안 헤더·Actuator CIDR·Redis TLS/ACL | 공통 | `AGENT_SPEC.md` 섹션 10 |
+| CORS·CSRF·보안 헤더·Actuator CIDR·Redis TLS/ACL | 공통 | `.cursor/rules/agent-security-platform.mdc` |
 
 **완료 기준:** 전체 모니터링 스택 가동, 브루트포스 알림 동작 확인
 
@@ -348,7 +348,7 @@ sso-bootstrap
 ### Actuator 포트 분리
 
 - 애플리케이션 포트: `8080` (외부 노출)
-- Actuator/메트릭 포트: `8081` (내부망 CIDR·허용 IP만, Prometheus 스크래핑 전용 — `AGENT_SPEC.md` 10.7)
+- Actuator/메트릭 포트: `8081` (내부망 CIDR·허용 IP만, Prometheus 스크래핑 전용 — `.cursor/rules/agent-security-platform.mdc`)
 
 ---
 
@@ -364,7 +364,7 @@ sso-bootstrap
 | `/actuator/**` (health 제외) | — | sso-bootstrap 등 | 내부망 CIDR + 선택적 Basic Auth |
 | `/actuator/health` | — | — | 공개 |
 
-상세 CORS·CSRF·보안 헤더·Rate Limit·Redis·SQLi 방지: `docs/AGENT_SPEC.md` 섹션 10.
+상세 CORS·CSRF·보안 헤더·Rate Limit·Redis·SQLi 방지: `.cursor/rules/agent-security-platform.mdc`.
 
 ### Rate Limiting 기본값
 
@@ -402,6 +402,6 @@ sso-bootstrap
 | 패스워드 강도 정책 | 테넌트별 설정 | TenantSettings |
 | 감사 로그 최소 보관 | 5년 (금융보안원) | Flyway + S3 아카이빙 |
 | 개인정보 열람 요청 | GDPR Article 15 | `/admin/audit/timeline/{userId}` |
-| 접근 로그 무결성 | 위변조 불가 | HMAC-SHA256 Checksum(Vault KV 키) + DB Rule (`AGENT_SPEC.md` 4.4) |
+| 접근 로그 무결성 | 위변조 불가 | HMAC-SHA256 Checksum(Vault KV 키) + DB Rule (`.cursor/rules/agent-audit-spec.mdc`) |
 | 암호화 전송 | TLS 1.2+ 강제 | HSTS 헤더 |
 | 최소 권한 원칙 | DB 사용자 권한 분리 | INSERT/SELECT Only |

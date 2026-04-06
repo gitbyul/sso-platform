@@ -1,0 +1,24 @@
+---
+description: sso-authorization-context 구현 규칙
+globs: sso-authorization-context/**/*.java
+alwaysApply: false
+---
+
+# SecurityFilterChain 소유권
+
+- 이 모듈은 Order=1(Authorization Server), Order=3(Resource Server)만 소유한다.
+- Order=2(Admin) 체인 구현은 `sso-admin-context`에서만 정의한다.
+
+# 역할 정책
+
+- `ROLE_SUPER_ADMIN`, `ROLE_TENANT_ADMIN`, `ROLE_USER` 체계를 사용한다.
+- `ROLE_ADMIN` 명칭은 사용하지 않는다.
+
+# 토큰/클레임
+
+- 토큰에 `tenant_id`, `roles`, `mfa_verified` 등 멀티테넌트/보안 클레임을 포함한다.
+- issuer URI는 테넌트별 동적 패턴을 지원한다.
+
+# 마이그레이션
+
+- Spring Authorization Server 공식 DDL은 V4.x.x 대역으로 관리한다.

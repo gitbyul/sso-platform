@@ -1,0 +1,34 @@
+---
+description: Flyway 버전 네이밍과 절차 규칙
+globs: **/db/migration/*.sql
+alwaysApply: false
+---
+
+# 파일 위치
+
+- 모든 마이그레이션은 `sso-bootstrap/src/main/resources/db/migration/`에서만 관리한다.
+
+# 버전 형식
+
+- `V{컨텍스트번호}.{기능번호}.{수정번호}__{설명}.sql`
+- 예: `V2.0.0__create_users_table.sql`
+
+# 컨텍스트 버전 대역
+
+- V0: shared/플랫폼 부트스트랩
+- V1: tenant
+- V2: identity
+- V3: client
+- V4: authorization
+- V5: session
+- V6: key
+- V7: audit
+- V8: federation
+
+# 마이그레이션 절차
+
+- 이미 적용된 파일은 수정하지 않고 새 버전 파일을 추가한다.
+- 컬럼 삭제는 코드 제거 이후 별도 단계로 분리한다.
+- `CREATE TABLE`에는 `IF NOT EXISTS`를 사용한다.
+- `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`를 기본 컬럼으로 포함한다.
+- 객체 명명/인덱스/제약조건은 `docs/DATABASE_RULES.md`를 따른다.

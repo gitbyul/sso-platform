@@ -1,0 +1,23 @@
+---
+description: sso-key-context 구현 규칙
+globs: sso-key-context/**/*.java
+alwaysApply: false
+---
+
+# 키 관리
+
+- `SigningKey` Aggregate와 `KeyRotationPolicy`를 통해 키 생명주기를 관리한다.
+- 개인키 저장/서명은 Vault Transit을 사용하고 공개키만 JWK로 노출한다.
+
+# 제공 컴포넌트
+
+- `JwkSetProvider`(`JWKSource`)는 ACTIVE 키만 노출한다.
+- JWK 응답은 Redis 캐시(TTL 5분)를 적용한다.
+
+# 공개 엔드포인트
+
+- `GET /.well-known/jwks.json`은 인증 없이 공개한다.
+
+# 마이그레이션
+
+- 키 메타데이터 스키마는 V6.x.x 대역으로 관리한다.

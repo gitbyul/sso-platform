@@ -1,0 +1,26 @@
+---
+description: AuditEvent 모델, 민감정보, HMAC 체크섬 규칙
+globs: **/*Audit*.java
+alwaysApply: false
+---
+
+# AuditEvent 필드 원칙
+
+- 식별/추적: `eventId`, `eventType`, `eventVersion`, `occurredAt`, `recordedAt`, `traceId`
+- 멀티테넌트/행위자: `tenantId`, `tenantDomain`, `actorType`, `actorId`, `actorEmail`, `actorIp`
+- 대상/결과: `targetType`, `targetId`, `result`, `failureReason`
+- 컨텍스트: `sessionId`, `clientId`, `userAgent`, `deviceFingerprint`, `geoCountry`, `geoCity`
+- 변경 스냅샷: `beforeState`, `afterState`
+- 무결성: `checksum`
+
+# 민감 필드 규칙
+
+- 패스워드(평문/해시), 토큰 원문, MFA 시크릿/백업코드는 감사 로그 포함 금지
+- 이메일은 마스킹 형태로 저장
+- `beforeState`/`afterState` 저장 전 민감 필드를 제거한다
+
+# 체크섬 규칙
+
+- checksum은 단순 해시가 아닌 HMAC-SHA256으로 계산한다.
+- HMAC 키는 Vault KV(`secret/sso/audit-hmac-key`)에서 로드한다.
+- 키 로테이션은 검증 -> 재서명 -> 폐기 순서로 운영한다.

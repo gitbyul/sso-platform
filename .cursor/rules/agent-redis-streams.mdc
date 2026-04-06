@@ -1,0 +1,23 @@
+---
+description: Redis Streams 채널 및 컨슈머 처리 규칙
+globs: **/*Stream*.java
+alwaysApply: false
+---
+
+# 채널 이름
+
+- `sso:stream:authentication-events`
+- `sso:stream:identity-events`
+- `sso:stream:security-events`
+- `sso:stream:key-events`
+- `sso:stream:dead-letter`
+
+# 메시지 필드
+
+- `eventId`, `eventType`, `tenantId`, `actorId`, `occurredAt`, `payload`를 표준 필드로 유지한다.
+
+# 컨슈머 규칙
+
+- `XREADGROUP` 기반 소비 후 성공 시 `XACK`한다.
+- 동일 메시지 3회 이상 실패 시 Dead Letter 채널로 이동한다.
+- 컨슈머 그룹/컨슈머 이름을 명시하고 멱등 처리를 보장한다.

@@ -1,0 +1,21 @@
+---
+description: sso-shared-kernel 구현 규칙
+globs: sso-shared-kernel/**/*.java
+alwaysApply: false
+---
+
+# 목적
+
+- 공통 도메인 기반(AggregateRoot, DomainEvent, ValueObject, EntityId)과 테넌트/아웃박스/예외/유틸을 제공한다.
+
+# 필수 구성
+
+- `TenantContextHolder`, `TenantResolutionFilter`, `TenantJwtValidationFilter`, `MdcPropagationFilter`
+- `OutboxEvent`, `OutboxPoller`
+- `SsoDomainException`, `SsoNotFoundException`, `ErrorCode` (코드·HTTP만; 문구 키는 `I18nMessageKeys` + DB/`messages.properties` — agent-i18n-db-messages.mdc)
+- `TimeProvider` 인터페이스 + 테스트 가능한 구현
+
+# 제약
+
+- 다른 컨텍스트 도메인 로직을 끌어오지 않는다.
+- shared-kernel은 재사용 가능한 기반 계약만 제공한다.
