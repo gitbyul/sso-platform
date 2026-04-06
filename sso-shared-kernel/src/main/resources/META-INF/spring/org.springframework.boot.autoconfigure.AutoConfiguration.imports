@@ -1,1 +1,3 @@
 com.gitbyul.shared.config.SharedKernelAutoConfiguration
+com.gitbyul.shared.config.SharedKernelI18nAutoConfiguration
+
