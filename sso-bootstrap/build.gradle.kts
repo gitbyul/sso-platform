@@ -18,6 +18,7 @@ repositories {
 }
 
 dependencies {
+	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation(project(":sso-shared-kernel"))
 	implementation(project(":sso-identity-context"))
 	implementation(project(":sso-tenant-context"))
