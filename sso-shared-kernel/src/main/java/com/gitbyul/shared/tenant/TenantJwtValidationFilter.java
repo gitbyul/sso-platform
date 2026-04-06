@@ -1,0 +1,130 @@
+package com.gitbyul.shared.tenant;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gitbyul.shared.audit.AuditEvent;
+import com.gitbyul.shared.util.RandomIdGenerator;
+import com.gitbyul.shared.util.TimeProvider;
+import org.slf4j.MDC;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.Ordered;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * JWT {@code tenant_id} 클레임과 {@link TenantContextHolder} 값을 일치 검증.
+ * <p>
+ * 불일치 시 {@code 403} 및 감사 이벤트 {@code SECURITY.TENANT_MISMATCH} 발행.
+ */
+public class TenantJwtValidationFilter extends OncePerRequestFilter implements Ordered {
+
+    private static final int ORDER = Ordered.HIGHEST_PRECEDENCE + 40;
+
+    private static final String TENANT_ID_CLAIM = "tenant_id";
+    private static final String EVENT_TYPE = "SECURITY.TENANT_MISMATCH";
+    private static final String EVENT_VERSION = "1.0";
+
+    private final ApplicationEventPublisher publisher;
+    private final ObjectMapper objectMapper;
+    private final RandomIdGenerator idGenerator;
+    private final TimeProvider timeProvider;
+
+    public TenantJwtValidationFilter(
+            ApplicationEventPublisher publisher,
+            ObjectMapper objectMapper,
+            RandomIdGenerator idGenerator,
+            TimeProvider timeProvider) {
+        this.publisher = publisher;
+        this.objectMapper = objectMapper;
+        this.idGenerator = idGenerator;
+        this.timeProvider = timeProvider;
+    }
+
+    @Override
+    public int getOrder() {
+        return ORDER;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+        String holderTenantId = TenantContextHolder.get();
+        JsonNode jwtPayload = JwtBearerPayloadSupport.readPayload(objectMapper, request);
+        String jwtTenantId = JwtBearerPayloadSupport.claimAsText(jwtPayload, TENANT_ID_CLAIM);
+
+        if (holderTenantId == null || jwtTenantId == null || jwtTenantId.equals(holderTenantId)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        publishTenantMismatchAuditEvent(request, jwtTenantId, holderTenantId, jwtPayload);
+        response.sendError(403, "Forbidden");
+    }
+
+    private void publishTenantMismatchAuditEvent(
+            HttpServletRequest request,
+            String jwtTenantId,
+            String holderTenantId,
+            JsonNode jwtPayload) {
+        Instant now = timeProvider.now();
+        UUID eventId = idGenerator.generateUuidV7();
+
+        String tenantDomain = request.getServerName();
+        String traceId = MDC.get("traceId");
+        String actorIp = request.getRemoteAddr();
+
+        String actorId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "sub");
+        String targetId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "jti");
+
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("expectedTenantId", holderTenantId);
+        metadata.put("jwtTenantId", jwtTenantId);
+
+        String actorType = "SERVICE";
+        String result = "FAILURE";
+        String failureReason = "TENANT_MISMATCH";
+
+        String userAgent = request.getHeader("User-Agent");
+
+        AuditEvent auditEvent = new AuditEvent(
+                eventId,
+                EVENT_TYPE,
+                EVENT_VERSION,
+                now,
+                now,
+                jwtTenantId,
+                tenantDomain,
+                actorType,
+                actorId,
+                null,
+                actorIp,
+                "TOKEN",
+                targetId,
+                result,
+                failureReason,
+                traceId,
+                null,
+                null,
+                userAgent,
+                null,
+                null,
+                null,
+                null,
+                null,
+                metadata,
+                null
+        );
+
+        publisher.publishEvent(auditEvent);
+    }
+}
