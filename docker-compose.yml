@@ -6,6 +6,7 @@ services:
       POSTGRES_DB: sso_platform
       POSTGRES_USER: sso
       POSTGRES_PASSWORD: sso
+      # 읽기 전용 역할 sso_readonly(로컬 기본 비밀번호 동일): Flyway V0.5.0 생성, V0.5.1에서 session/key/federation 스키마 권한
     ports:
       # 호스트 5433 → 컨테이너 5432 (로컬 PostgreSQL 등이 5432를 쓰는 경우 대비)
       - "5433:5432"
