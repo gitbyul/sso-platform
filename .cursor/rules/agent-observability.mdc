@@ -24,5 +24,6 @@ alwaysApply: false
 
 # 로그 포맷
 
-- `docker`/`production` 프로파일에서 JSON 로그를 사용한다.
-- `local`에서는 개발 생산성을 위해 텍스트 로그를 유지한다.
+- 구현: `sso-bootstrap/src/main/resources/logback-spring.xml` — `docker`, `production`, `dev`, `staging` 은 Spring Boot `structured-console-appender` + `logging.structured.format.console=logstash`(한 줄 JSON). `local`(및 위 네 프로파일이 모두 비활성인 경우)은 텍스트 콘솔 + `application-local.properties` 의 `logging.pattern.console`(MDC 표준 키 반영).
+- **JSON:** `docker`, `production`, `dev`, `staging`.
+- **텍스트:** `local` (워크스테이션에서 Compose 인프라만 띄우고 JVM으로 앱 실행하는 기본 패턴).

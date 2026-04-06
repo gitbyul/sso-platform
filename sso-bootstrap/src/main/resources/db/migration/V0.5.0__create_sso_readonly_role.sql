@@ -1,14 +1,22 @@
 -- V0.x: 리포팅·로컬 클라이언트용 읽기 전용 역할 (런타임 애플리케이션은 datasource 의 sso 계정 사용)
 -- 비개발 환경에서는 비밀번호 회전·Vault 등으로 관리할 것.
-CREATE ROLE sso_readonly WITH
-    LOGIN
-    NOSUPERUSER
-    INHERIT
-    NOCREATEDB
-    NOCREATEROLE
-    NOREPLICATION
-    CONNECTION LIMIT -1
-    PASSWORD 'sso_readonly';
+-- 역할이 이미 있으면 생성만 건너뜀(수동 생성·재실행 DB 멱등). GRANT/COMMENT 는 매 실행 적용.
+DO
+$$
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'sso_readonly') THEN
+            CREATE ROLE sso_readonly WITH
+                LOGIN
+                NOSUPERUSER
+                INHERIT
+                NOCREATEDB
+                NOCREATEROLE
+                NOREPLICATION
+                CONNECTION LIMIT -1
+                PASSWORD 'sso_readonly';
+        END IF;
+    END
+$$;
 
 COMMENT ON ROLE sso_readonly IS 'Read-only SELECT on application schemas; not for application runtime datasource.';
 

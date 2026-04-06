@@ -7,8 +7,9 @@ alwaysApply: false
 # TenantResolutionFilter
 
 - 테넌트 식별은 서브도메인을 우선으로 한다.
-- local/dev에서만 `X-Tenant-ID` 헤더 fallback을 허용한다.
-- production에서는 fallback 없이 식별 실패 시 `400`을 반환한다.
+- `local`·`dev`에서만 `X-Tenant-ID` 헤더 fallback을 허용한다.
+- `production`에서는 fallback 없이 식별 실패 시 `400`을 반환한다.
+- `staging`은 운영 검증 목적이면 `production`과 동일하게 fallback 없음을 **권장**한다.
 - `/.well-known/**`, `/actuator/**` 예외 경로는 스킵 정책을 명시한다.
 
 # TenantContextHolder / MDC

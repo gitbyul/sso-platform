@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  단계별 로그 출력 (agent-observability.mdc 정합):
+  - local 만(또는 아래 Phase B 조건): 텍스트 콘솔 (application-local.properties 의 logging.pattern.console)
+  - docker / production / dev / staging: 구조화 JSON (logging.structured.format.console=logstash)
+-->
+<configuration>
+	<include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+	<!-- 컨테이너·운영·공유 dev/staging — JSON 콘솔 -->
+	<springProfile name="docker,production,dev,staging">
+		<include resource="org/springframework/boot/logging/logback/structured-console-appender.xml"/>
+		<root level="INFO">
+			<appender-ref ref="CONSOLE"/>
+		</root>
+	</springProfile>
+
+	<!-- 로컬 JVM(workstation) — 가독성 위주 텍스트 콘솔 -->
+	<springProfile name="!docker &amp; !production &amp; !dev &amp; !staging">
+		<include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+		<root level="INFO">
+			<appender-ref ref="CONSOLE"/>
+		</root>
+	</springProfile>
+</configuration>
