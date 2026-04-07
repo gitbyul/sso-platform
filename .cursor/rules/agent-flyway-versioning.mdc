@@ -8,28 +8,32 @@ alwaysApply: false
 
 - 모든 마이그레이션은 `sso-bootstrap/src/main/resources/db/migration/`에서만 관리한다.
 
-# 버전 형식
+# 버전 형식 (운영 기준)
 
-- `V{컨텍스트번호}.{기능번호}.{수정번호}__{설명}.sql`
-- 예: `V2.0.0__create_users_table.sql`
+- `V{메이저}.{마이너}.{패치}__{설명}.sql`
+- 새 마이그레이션 버전은 항상 **저장소·배포 환경 기준 현재 최대 버전보다 커야 한다**.
+- 예: 현재 최대가 `V1.0.3`이면 다음은 `V1.0.4__...` 이상
 
-# 컨텍스트 버전 대역
+# 컨텍스트 표기 (설명 메타)
 
-- V0: shared/플랫폼 부트스트랩
-- V1: tenant
-- V2: identity
-- V3: client
-- V4: authorization
-- V5: session
-- V6: key
-- V7: audit
-- V8: federation
+- 컨텍스트는 버전 대역(V0~V8)으로 강제하지 않고, `__설명`에서 접두어로 표현한다.
+- 권장 접두어: `shared_`, `tenant_`, `identity_`, `client_`, `authorization_`, `session_`, `key_`, `audit_`, `federation_`
+- 예: `V1.0.4__shared_add_readonly_grant.sql`, `V1.0.5__tenant_add_default_locale.sql`
+
+# Flyway 정렬 원칙 (중요)
+
+- Flyway는 파일명의 **버전 숫자만**으로 전역 정렬한다. 컨텍스트 의미는 `__설명` 메타일 뿐 실행 순서를 바꾸지 못한다.
+- 이미 어떤 환경에서든 상위 버전이 적용된 뒤, 더 낮은 버전 파일을 새로 추가하면 `out-of-order=false`에서 검증 실패/미적용이 발생할 수 있다.
+- 따라서 운영 안전성을 위해 신규 버전은 항상 **현재 최대 버전 초과**로만 추가한다(전역 단조 증가).
 
 # 마이그레이션 절차
 
+- **순서 역전 방지(모범):** 새 스크립트는 **저장소·배포 환경에서 이미 적용된 최대 버전보다 큰 버전**만 추가한다. 과거 번호 구간(낮은 버전)에 끼워 넣지 않는다.
+- **out-of-order:** Flyway 기본은 `false`가 안전하다. **`staging`·`production` 프로파일은 `spring.flyway.out-of-order=false` 고정**(sso-bootstrap). **`local`·`docker`·`dev`** 만 개발 초기·레거시 볼륨 대비로 `true`를 둘 수 있다. setup 안정화 후에는 로컬도 `false`로 맞추고 DB 볼륨 재생성·`repair`·일회성 마이그레이션으로 정합하는 것을 권장한다.
 - **원칙:** 이미 성공 적용된 버전 파일은 되도록 수정하지 않고 **새 버전 파일**을 추가한다.
 - **예외:** 멱등 보강·치명 결함·보안 수정 등으로 기존 파일을 바꿀 때는 **Flyway `validate` checksum 불일치**가 날 수 있다. 해당 환경에서 **`repair` 또는 합의된 checksum 정합** 절차를 밟는다.
 - **멱등:** PostgreSQL **역할(`CREATE ROLE`)** 등 전역 객체는 수동 선행 생성·재실행이 있을 수 있으므로, `pg_roles` 등 확인 후 **`DO $$ … $$`** 로 생성 건너뛰기 패턴을 허용한다. `CREATE SCHEMA`/`CREATE TABLE` 등은 `IF NOT EXISTS`를 활용한다.
+- **컨텍스트 표기:** 버전 번호로 컨텍스트를 인코딩하지 않고, 파일 설명 접두어(`shared_`, `tenant_` 등)로 구분한다.
 - 컬럼 삭제는 코드 제거 이후 별도 단계로 분리한다.
 - `CREATE TABLE`에는 `IF NOT EXISTS`를 사용한다.
 - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`를 기본 컬럼으로 포함한다.

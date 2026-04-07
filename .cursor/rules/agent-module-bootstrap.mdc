@@ -27,3 +27,5 @@ alwaysApply: false
 | `dev` | 공유 개발 서버 | `application-dev.properties` | **환경 변수/시크릿만** — 자격증명을 Git에 넣지 않는다 |
 | `staging` | 운영 수준 검증 | `application-staging.properties` | 운영과 동일 메커니즘, 스테이징 전용 값 |
 | `production` | 운영 | `application-production.properties` | Vault AppRole/K8s Secret 등 — 토큰·비밀번호를 리포지토리에 두지 않는다 |
+
+**Flyway 실행 원칙:** 버전은 전역 단조 증가(현재 최대 버전 초과만 추가)를 따른다. `staging`·`production` 은 `spring.flyway.out-of-order=false` 고정, `local`·`docker`·`dev` 는 초기 정합 문제 대응 시에만 임시 `true`를 허용한다(안정화 후 회수). 상세는 `agent-flyway-versioning.mdc`.
