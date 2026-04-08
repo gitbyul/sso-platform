@@ -34,4 +34,21 @@ class JwtBearerPayloadSupportTest {
         MockHttpServletRequest req = new MockHttpServletRequest();
         assertThat(JwtBearerPayloadSupport.readPayload(mapper, req)).isNull();
     }
+
+    @Test
+    void readPayload_cachesDecodedPayloadInRequestAttribute() {
+        String payloadJson = "{\"tenant_id\":\"acme-corp\",\"sub\":\"u1\"}";
+        String b64 =
+                Base64.getUrlEncoder()
+                        .withoutPadding()
+                        .encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.addHeader("Authorization", "Bearer x." + b64 + ".sig");
+
+        var first = JwtBearerPayloadSupport.readPayload(mapper, req);
+
+        req.removeHeader("Authorization");
+        var second = JwtBearerPayloadSupport.readPayload(mapper, req);
+        assertThat(second).isSameAs(first);
+    }
 }

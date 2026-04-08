@@ -1,5 +1,7 @@
 package com.gitbyul.shared.util;
 
+import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -12,7 +14,12 @@ public final class RandomIdGenerator {
     private static final long RANDOM_B_MASK = (1L << 62) - 1; // 62 bits
 
     public UUID generateUuidV7() {
-        long timestampMs = System.currentTimeMillis() & 0xFFFFFFFFFFFFL; // 48 bits
+        return generateUuidV7(Instant.now());
+    }
+
+    public UUID generateUuidV7(Instant timestamp) {
+        Objects.requireNonNull(timestamp, "timestamp");
+        long timestampMs = timestamp.toEpochMilli() & 0xFFFFFFFFFFFFL; // 48 bits
 
         long randomA = ThreadLocalRandom.current().nextLong() & RANDOM_A_MASK; // 12 bits
         long randomB = ThreadLocalRandom.current().nextLong() & RANDOM_B_MASK; // 62 bits

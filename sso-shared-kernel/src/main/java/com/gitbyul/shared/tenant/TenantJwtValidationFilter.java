@@ -77,12 +77,11 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
         }
 
         JsonNode jwtPayload = JwtBearerPayloadSupport.readPayload(objectMapper, request);
-        String jwtTenantId = JwtBearerPayloadSupport.claimAsText(jwtPayload, TENANT_ID_CLAIM);
-
         if (jwtPayload == null) {
             filterChain.doFilter(request, response);
             return;
         }
+        String jwtTenantId = JwtBearerPayloadSupport.claimAsText(jwtPayload, TENANT_ID_CLAIM);
         if (jwtTenantId == null || !jwtTenantId.equals(holderTenantId)) {
             publishTenantMismatchAuditEvent(request, jwtTenantId, holderTenantId, jwtPayload);
             writeTenantMismatch(request, response);
@@ -126,7 +125,7 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
             String holderTenantId,
             JsonNode jwtPayload) {
         Instant now = timeProvider.now();
-        UUID eventId = idGenerator.generateUuidV7();
+        UUID eventId = idGenerator.generateUuidV7(now);
 
         String tenantDomain = request.getServerName();
         String traceId = MDC.get("traceId");
@@ -138,6 +137,14 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
         Map<String, String> metadata = new HashMap<>();
         metadata.put("expectedTenantId", holderTenantId);
         metadata.put("jwtTenantId", jwtTenantId != null ? jwtTenantId : "");
+        String clientId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "azp");
+        if (clientId != null) {
+            metadata.put("jwtClientId", clientId);
+        }
+        String sessionId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "sid");
+        if (sessionId != null) {
+            metadata.put("jwtSessionId", sessionId);
+        }
         if (jwtTenantId == null) {
             metadata.put("reason", "MISSING_TENANT_CLAIM");
         }
