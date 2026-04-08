@@ -35,7 +35,7 @@ public final class JwtBearerPayloadSupport {
             return null;
         }
         String token = authHeader.substring("Bearer ".length()).trim();
-        String[] parts = token.split("\\.");
+        String[] parts = token.split("\\.", 3);
         if (parts.length < 2) {
             request.setAttribute(PAYLOAD_ATTRIBUTE, NO_PAYLOAD);
             return null;

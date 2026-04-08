@@ -133,18 +133,12 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
 
         String actorId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "sub");
         String targetId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "jti");
+        String clientId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "azp");
+        String sessionId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "sid");
 
         Map<String, String> metadata = new HashMap<>();
         metadata.put("expectedTenantId", holderTenantId);
         metadata.put("jwtTenantId", jwtTenantId != null ? jwtTenantId : "");
-        String clientId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "azp");
-        if (clientId != null) {
-            metadata.put("jwtClientId", clientId);
-        }
-        String sessionId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "sid");
-        if (sessionId != null) {
-            metadata.put("jwtSessionId", sessionId);
-        }
         if (jwtTenantId == null) {
             metadata.put("reason", "MISSING_TENANT_CLAIM");
         }
@@ -175,8 +169,8 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
                 result,
                 failureReason,
                 traceId,
-                null,
-                null,
+                sessionId,
+                clientId,
                 userAgent,
                 null,
                 null,

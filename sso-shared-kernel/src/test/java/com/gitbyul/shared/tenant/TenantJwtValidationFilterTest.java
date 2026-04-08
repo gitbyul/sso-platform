@@ -106,7 +106,9 @@ class TenantJwtValidationFilterTest {
                         emptyObjectProvider(),
                         emptyObjectProvider());
 
-        MockHttpServletRequest req = bearerWithTenant("other-tenant", "sub-1");
+        MockHttpServletRequest req =
+                bearerWithJsonPayload(
+                        "{\"tenant_id\":\"other-tenant\",\"sub\":\"sub-1\",\"azp\":\"portal-web\",\"sid\":\"session-123\"}");
         MockHttpServletResponse res = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
 
@@ -118,6 +120,8 @@ class TenantJwtValidationFilterTest {
         AuditEvent event = captor.getValue();
         assertThat(event.eventType()).isEqualTo("SECURITY.TENANT_MISMATCH");
         assertThat(event.tenantId()).isEqualTo("acme-corp");
+        assertThat(event.clientId()).isEqualTo("portal-web");
+        assertThat(event.sessionId()).isEqualTo("session-123");
         assertThat(event.metadata())
                 .containsEntry("expectedTenantId", "acme-corp")
                 .containsEntry("jwtTenantId", "other-tenant");
