@@ -1,0 +1,31 @@
+# Gemini Code Assist — 저장소 로컬 설정
+# 스키마: https://developers.google.com/gemini-code-assist/docs/customize-repo-review
+# 저장소 루트의 config.yaml은 그룹/계정 설정보다 우선 적용된다.
+
+have_fun: false
+
+memory_config:
+  # 다중 저장소에서 "응답 품질 개선"을 쓰는 경우, 특정 저장소만 끄려면 true
+  disabled: false
+
+code_review:
+  disable: false
+  # LOW~CRITICAL. 소음을 줄이려면 HIGH 권장 — 팀 정책에 맞게 조정
+  comment_severity_threshold: MEDIUM
+  max_review_comments: -1
+  pull_request_opened:
+    help: false
+    summary: true
+    code_review: true
+    include_drafts: true
+
+# VS Code glob 형식. 빌드 산출물·IDE 메타는 리뷰 노이즈만 늘리므로 제외
+ignore_patterns:
+  - "**/build/**"
+  - "**/.gradle/**"
+  - "**/out/**"
+  - "**/bin/**"
+  - ".idea/**"
+  - "**/*.iml"
+  - ".vscode/**"
+  - "HELP.md"
