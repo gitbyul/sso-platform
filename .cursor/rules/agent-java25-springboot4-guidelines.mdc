@@ -1,0 +1,39 @@
+---
+description: Java 25·Spring Boot 4.x 최신 언어·프레임워크 기법 기반 코드 작성 가이드(전역)
+alwaysApply: true
+---
+
+# Java 25 / Spring Boot 4 코드 가이드라인
+
+이 규칙은 **언어·런타임·Spring Boot 사용 방식**에 대한 최신 권장 사항이다. 도메인 경계, CQRS, 보안, 감사 등 **다른 `agent-*.mdc`와 충돌하면 해당 모듈/보안 규칙이 우선**한다.
+
+## 기준 스택
+
+- **Java 25**: 최신 언어·표준 API를 기본으로 한다. (preview/feature는 팀 정책·빌드 설정과 명시적으로 일치할 때만 사용)
+- **Spring Boot 4.0.x**: 공식 참조는 4.0 문서·릴리스 노트를 기준으로 한다.
+
+## Java 언어·API (최신 관행)
+
+- **불변·모델링**: DTO·명령·조회 결과·값 객체에는 `record`를 우선 검토한다. 동등성·해시·접근자 보일러플레이트를 줄인다.
+- **대수적 데이터**: 허용된 하위 타입 집합이 고정이면 `sealed` 클래스/인터페이스로 모델을 닫고, `switch`의 **패턴 매칭**으로 **전체성(exhaustiveness)** 을 컴파일러에 맡긴다.
+- **패턴**: `instanceof`·`switch`에서 레코드 패턴·타입 패턴을 사용해 분기와 추출을 한 번에 처리한다. 제네릭·와일드카드가 있는 경우 타입 추론 규칙을 이해하고 과도하게 복잡한 패턴은 가독성 기준으로 분리한다.
+- **동시성**: 블로킹 I/O 위주 서비스는 **가상 스레드**를 적극 검토한다. 핀닝(pinning)·`synchronized` 구간 등으로 인한 이슈는 Java 가상 스레드 문서·JFR/`jcmd`로 점검한다.
+- **구조적 동시성**: `ExecutorService`·`StructuredTaskScope` 등 **JDK 표준** 방식으로 하위 작업 수명·취소를 묶는 패턴을 선호한다. (커스텀 스레드 풀 남발 대신 의미 있는 범위(scoped) 단위로 설계)
+- **시간·텍스트**: 시간은 `java.time`만 사용한다. 여러 줄 문자열은 텍스트 블록을 사용한다.
+- **Optional**: nullable을 표현하는 유일한 수단으로 쓰지 않는다. 반환 타입·필드 설계는 팀 규칙·null 안전성 정책과 맞춘다.
+
+## Spring Boot 4 애플리케이션
+
+- **가상 스레드**: `spring.threads.virtual.enabled=true` 사용 시, 적용 전 **처리량·핀닝**을 검증한다. Spring Boot 문서는 **Java 21 이상 필수, 가능하면 Java 24+** 사용을 권장한다.
+- **설정**: `application.yml`/`properties`와 타입 세이프 `@ConfigurationProperties`(record 또는 불변 빈)로 외부화한다. 기본값으로 보안·멀티테넌시를 깨는 설정은 두지 않는다.
+- **관측**: 커스텀 지표는 `MeterRegistry`를 주입해 등록한다. Actuator·Micrometer와 기존 `agent-observability.mdc` 지침을 함께 따른다.
+- **로깅**: 구조화 로그가 필요하면 Log4j2 등에서 **StructuredLogLayout**(형식·문자셋은 부트가 제공하는 시스템 프로퍼티와 연동) 같은 **구조화 레이아웃**을 검토한다. 민감정보 마스킹은 감사 규칙을 따른다.
+- **테스트**: 전체 `@SpringBootTest`만 반복하지 말고, MVC·JPA 등 **슬라이스 테스트**와 `spring-boot-test-autoconfigure`로 필요한 조각만 로드한다 (`tdd-strict.mdc`의 Testcontainers 요구와 병행).
+- **네이티브 이미지**: GraalVM 네이티브를 쓰는 경우 Gradle에 `org.graalvm.buildtools.native` 플러그인을 적용하고 **AOT(`processAot`/`processTestAot`)** 파이프라인을 빌드에 포함한다.
+- **HTTP 아웃바운드**: 새 코드에서는 **`@HttpExchange` 계약 인터페이스**와 Spring Boot의 **HTTP Service 클라이언트** 등록(`@ImportHttpServices`, `spring.http.serviceclient.<group>.*`)을 검토한다. 그룹별 `base-url`·타임아웃·헤더는 YAML로 두고, 교차관심은 `RestClientHttpServiceGroupConfigurer` 등으로 묶는다. 동기/비동기 요구에 따라 `RestClient` vs `WebClient` 선택은 기존 모듈 패턴과 맞춘다.
+
+## 코드 작성 시 점검
+
+- **신규 public API**: record/sealed/switch 패턴으로 모델과 분기가 더 안전해지는지 한 번 검토한다.
+- **블로킹 호출**: 가상 스레드 전환 시 동기 JDBC·네이티브 호출·파일·일부 라이브러리가 병목이 될 수 있음을 인지한다.
+- **문서 출처**: Spring Boot 4·JLS·JDK 릴리스별 behavior 변경은 **해당 버전 공식 문서**를 확인한다. (내부 규칙과 함께 Context7 등으로 최신 문서를 대조하는 것을 권장한다.)

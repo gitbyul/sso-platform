@@ -1,0 +1,65 @@
+---
+description: Git 커밋 메시지(한국어) + GitHub 마일스톤·이슈·PR 규칙
+alwaysApply: true
+---
+
+참고:
+- **전역(모든 저장소)**: Cursor **Settings → Rules for AI**에 한글 커밋 규칙을 넣으면 커밋 생성 시 `personalContext`로 포함된다. 붙여넣기용 문구는 `~/.cursor/default.cursorrules`와 동일하게 맞추면 된다.
+- **저장소별**: 루트 `.cursorrules`는 repoContext로 함께 전달된다. 새 저장소에는 `cp ~/.cursor/default.cursorrules <repo>/.cursorrules`.
+- 이 `.mdc`는 채팅·에이전트용이다.
+
+# Git / SCM 커밋 메시지 언어
+
+Cursor **Source Control**의 **Generate commit message**(스테이징된 변경 기준 자동 생성)를 포함해, 이 저장소에서 작성하는 **모든 git 커밋 메시지**는 **한국어**로만 출력한다.
+
+- 영어로만 된 제목·본문을 만들지 않는다.
+- Conventional Commits를 쓸 때: `feat`, `fix`, `refactor`, `docs`, `test`, `chore` 등 **type은 영문 소문자**로 두고, **콜론 뒤 설명은 한국어**로 쓴다. (예: `feat: SSO 부트스트랩 모듈 추가`)
+- 클래스명·메서드명·파일 경로 등 코드 식별자는 원문(영문)을 그대로 둔다.
+- 한 줄 제목을 기본으로 하고, 필요하면 한국어로 짧은 본문을 덧붙인다.
+
+# GitHub — 마일스톤·이슈·PR
+
+저장소: `gitbyul/sso-platform`. 로드맵 출처: [`.cursor/docs/DEVELOPMENT_PLAN.md`](../docs/DEVELOPMENT_PLAN.md) 4절. 제품·기술 추적: [`.cursor/docs/PRD.md`](../docs/PRD.md), [`.cursor/docs/TRD.md`](../docs/TRD.md). FR/TR ID 연결은 TRD §1 매트릭스를 따른다.
+
+## 마일스톤 이름
+
+`DEVELOPMENT_PLAN.md` 4절 **절 제목과 동일** (총 6개):
+
+- `Phase 0 — 공통 기반 구축 (Sprint 1~2)`
+- `Phase 1 — 핵심 도메인 구축 (Sprint 3~4)`
+- `Phase 2 — OAuth2 Authorization Server (Sprint 5~6)`
+- `Phase 3 — 세션 관리 + 감사 파이프라인 (Sprint 7~8)`
+- `Phase 4 — 외부 IdP 연동 (Sprint 9~10)`
+- `Phase 5 — 관리자 포털 + 운영 강화 (Sprint 11+)`
+
+## 에픽 이슈
+
+- **제목:** `[Epic]` + 위와 동일한 Phase 제목 문자열
+- **라벨:** `type:epic`
+- **마일스톤:** 해당 Phase와 동일 이름
+- **본문:** 해당 Phase **목표**·**완료 기준**·문서 링크(`PRD.md`, `TRD.md`, `DEVELOPMENT_PLAN.md` 해당 절). TR 매트릭스는 `TRD.md` §1 참조. Phase 5 에픽 본문에 Phase 2 주석(`/admin/**`는 `sso-admin-context`, Phase 5에서 완성)을 참고로 명시할 수 있다.
+
+## 하위 이슈(작업)
+
+- **제목:** `[Phase N] {모듈 짧게} {작업 요약(한국어)}` — `DEVELOPMENT_PLAN.md` 표 **작업** 열을 요약
+- **라벨:** `type:task` + 모듈·영역 라벨(아래)
+- **마일스톤:** 해당 Phase
+- **본문:** 표의 **산출물**·**모듈**·관련 FR/TR(가능 시)·상위 에픽 `상위: #번호`. 하단 고정 블록:
+
+```markdown
+## 추적
+- 상위 에픽: #<epic_no>
+- 마일스톤: Phase N — …
+- 참고: `.cursor/docs/DEVELOPMENT_PLAN.md` §4
+```
+
+## 라벨
+
+- **유형:** `type:epic`, `type:task`
+- **모듈(`sso-*` → 슬러그):** `module/shared-kernel`, `module/bootstrap`, `module/tenant`, `module/identity`, `module/key`, `module/client`, `module/authorization`, `module/session`, `module/audit`, `module/federation`, `module/admin`
+- **기타:** `area/infra`(인프라 행), `area/common`(공통 행), `area/contexts`(`각 컨텍스트 모듈` 행)
+
+## Pull Request
+
+- **제목:** 위 **Git / SCM 커밋 메시지**와 동일 규칙 — type 영문 소문자, 콜론 뒤 한국어
+- **본문:** `Closes #이슈` 또는 `Fixes #이슈` (여러 이슈면 나열). 보안·회귀 변경 시 `.cursor/rules/tdd-strict.mdc` 시나리오 충족을 명시. TR·FR 추적 ID가 있으면 본문에 표기

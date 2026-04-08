@@ -21,7 +21,9 @@
 
 | 구분                      | 규칙 파일                                         |
 | ------------------------- | ------------------------------------------------- |
+| Git·GitHub (커밋·이슈·PR) | `.cursor/rules/agent-scm-github.mdc`              |
 | 프로젝트 컨텍스트         | `.cursor/rules/agent-project-context.mdc`         |
+| Java 25 / Spring Boot 4   | `.cursor/rules/agent-java25-springboot4-guidelines.mdc` |
 | 패키지/경계/네이밍        | `.cursor/rules/agent-architecture-boundaries.mdc` |
 | CQRS 패턴                 | `.cursor/rules/agent-cqrs-patterns.mdc`           |
 | 이벤트/Outbox             | `.cursor/rules/agent-events-outbox.mdc`           |
