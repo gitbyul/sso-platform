@@ -23,6 +23,8 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.gitbyul.shared.testsupport.TestObjectProviders.emptyObjectProvider;
+import static com.gitbyul.shared.testsupport.TestObjectProviders.objectProviderOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -157,24 +159,5 @@ class TenantResolutionFilterTest {
         filter.doFilter(req, res, chain);
 
         assertThat(res.getStatus()).isEqualTo(200);
-    }
-
-    /** Spring {@code ObjectProvider}에 정적 empty()가 없어, 테스트 전용으로 항상 비어 있는 제공자를 둔다. */
-    private static <T> ObjectProvider<T> emptyObjectProvider() {
-        return new ObjectProvider<>() {
-            @Override
-            public T getIfAvailable() {
-                return null;
-            }
-        };
-    }
-
-    private static <T> ObjectProvider<T> objectProviderOf(T bean) {
-        return new ObjectProvider<>() {
-            @Override
-            public T getIfAvailable() {
-                return bean;
-            }
-        };
     }
 }

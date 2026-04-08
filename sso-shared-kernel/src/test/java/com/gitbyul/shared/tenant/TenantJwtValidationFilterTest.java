@@ -8,7 +8,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -17,6 +16,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+import static com.gitbyul.shared.testsupport.TestObjectProviders.emptyObjectProvider;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -98,15 +98,5 @@ class TenantJwtValidationFilterTest {
         MockHttpServletRequest req = new MockHttpServletRequest();
         req.addHeader("Authorization", "Bearer " + token);
         return req;
-    }
-
-    /** Spring {@code ObjectProvider}에 정적 empty()가 없어, 테스트 전용으로 항상 비어 있는 제공자를 둔다. */
-    private static <T> ObjectProvider<T> emptyObjectProvider() {
-        return new ObjectProvider<>() {
-            @Override
-            public T getIfAvailable() {
-                return null;
-            }
-        };
     }
 }
