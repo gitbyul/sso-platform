@@ -71,13 +71,14 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String holderTenantId = TenantContextHolder.get();
-        JsonNode jwtPayload = JwtBearerPayloadSupport.readPayload(objectMapper, request);
-        String jwtTenantId = JwtBearerPayloadSupport.claimAsText(jwtPayload, TENANT_ID_CLAIM);
-
         if (holderTenantId == null) {
             filterChain.doFilter(request, response);
             return;
         }
+
+        JsonNode jwtPayload = JwtBearerPayloadSupport.readPayload(objectMapper, request);
+        String jwtTenantId = JwtBearerPayloadSupport.claimAsText(jwtPayload, TENANT_ID_CLAIM);
+
         if (jwtPayload == null) {
             filterChain.doFilter(request, response);
             return;
@@ -141,7 +142,8 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
             metadata.put("reason", "MISSING_TENANT_CLAIM");
         }
 
-        String auditTenantId = jwtTenantId != null ? jwtTenantId : "";
+        // 감사 스트림 소유·라우팅: 요청 컨텍스트 테넌트(holder). JWT 측 값은 metadata 로 보존.
+        String auditTenantId = holderTenantId;
 
         String actorType = "SERVICE";
         String result = "FAILURE";

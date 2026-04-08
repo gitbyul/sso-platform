@@ -46,6 +46,29 @@ class TenantJwtValidationFilterTest {
     }
 
     @Test
+    void holderUnset_continuesChainWithoutPublishing_evenWithBearer() throws Exception {
+        ApplicationEventPublisher publisher = mock(ApplicationEventPublisher.class);
+
+        TenantJwtValidationFilter filter =
+                new TenantJwtValidationFilter(
+                        publisher,
+                        objectMapper,
+                        new RandomIdGenerator(),
+                        new FixedTimeProvider(java.time.Instant.parse("2026-04-08T00:00:00Z")),
+                        emptyObjectProvider(),
+                        emptyObjectProvider());
+
+        MockHttpServletRequest req = bearerWithTenant("acme-corp", "sub-1");
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(req, res, chain);
+
+        assertThat(res.getStatus()).isEqualTo(200);
+        verifyNoInteractions(publisher);
+    }
+
+    @Test
     void matchingTenantId_continuesChain() throws Exception {
         TenantContextHolder.set("acme-corp");
         ApplicationEventPublisher publisher = mock(ApplicationEventPublisher.class);
@@ -94,7 +117,7 @@ class TenantJwtValidationFilterTest {
         verify(publisher).publishEvent(captor.capture());
         AuditEvent event = captor.getValue();
         assertThat(event.eventType()).isEqualTo("SECURITY.TENANT_MISMATCH");
-        assertThat(event.tenantId()).isEqualTo("other-tenant");
+        assertThat(event.tenantId()).isEqualTo("acme-corp");
         assertThat(event.metadata())
                 .containsEntry("expectedTenantId", "acme-corp")
                 .containsEntry("jwtTenantId", "other-tenant");
@@ -172,7 +195,7 @@ class TenantJwtValidationFilterTest {
         verify(publisher).publishEvent(captor.capture());
         AuditEvent event = captor.getValue();
         assertThat(event.eventType()).isEqualTo("SECURITY.TENANT_MISMATCH");
-        assertThat(event.tenantId()).isEmpty();
+        assertThat(event.tenantId()).isEqualTo("acme-corp");
         assertThat(event.metadata())
                 .containsEntry("expectedTenantId", "acme-corp")
                 .containsEntry("jwtTenantId", "")
