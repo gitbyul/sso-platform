@@ -1,9 +1,9 @@
 # 데이터베이스 규칙 & 인덱스 가이드 (PostgreSQL 16 기준)
 
 이 문서는 기존 인덱스 가이드 초안의 모호/오류 부분을 보정한 **실행 가능한 규칙**이다.
-프로젝트 표준 스키마는 [`AGENTS.md`](../AGENTS.md) 및 `.cursor/rules/agent-module-*.mdc`의 바운디드 컨텍스트 정의에 맞춘다. (`shared`, `tenant`, `identity`, `client`, `session`, `key`, `audit`, `federation` 등 — 스키마 추가 시 Flyway와 본 문서의 모니터링 절을 함께 갱신한다.)
+프로젝트 표준 스키마는 [`AGENTS.md`](../../AGENTS.md) 및 `.cursor/rules/agent-module-*.mdc`의 바운디드 컨텍스트 정의에 맞춘다. (`shared`, `tenant`, `identity`, `client`, `session`, `key`, `audit`, `federation` 등 — 스키마 추가 시 Flyway와 본 문서의 모니터링 절을 함께 갱신한다.)
 
-**문서 진입점:** [`README.md`](../README.md) · [`DEVELOPMENT_PLAN.md`](./DEVELOPMENT_PLAN.md) · [`AGENTS.md`](../AGENTS.md). DDL은 `sso-bootstrap/src/main/resources/db/migration/`에 두며, 버전·파일 규칙은 `.cursor/rules/agent-flyway-versioning.mdc`, **객체 이름·인덱스·운영 점검**은 본 문서가 기준이다.
+**문서 진입점:** [`README.md`](../../README.md) · [`PRD.md`](./PRD.md) · [`TRD.md`](./TRD.md) · [`DEVELOPMENT_PLAN.md`](./DEVELOPMENT_PLAN.md) · [`AGENTS.md`](../../AGENTS.md). DDL은 `sso-bootstrap/src/main/resources/db/migration/`에 두며, 버전·파일 규칙은 `.cursor/rules/agent-flyway-versioning.mdc`, **객체 이름·인덱스·운영 점검**은 본 문서가 기준이다.
 
 ---
 

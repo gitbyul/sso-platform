@@ -15,4 +15,4 @@ alwaysApply: false
 - Command 트랜잭션 안에서 도메인 상태 변경과 Outbox insert를 함께 처리한다.
 - Outbox 발행기는 `published = false` 이벤트를 폴링해 스트림으로 발행한다.
 - 발행 성공 시 `published = true`로 마킹한다.
-- Outbox 테이블/인덱스 명명은 `docs/DATABASE_RULES.md`를 따른다.
+- Outbox 테이블/인덱스 명명은 `.cursor/docs/DATABASE_RULES.md`를 따른다.

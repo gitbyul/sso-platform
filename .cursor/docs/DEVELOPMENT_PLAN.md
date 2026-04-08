@@ -42,10 +42,12 @@ OAuth 2.0 / OIDC 표준을 완전 준수하며, 테넌트별 독립적인 인증
 | 문서 | 역할 |
 |------|------|
 | 본 문서 (`DEVELOPMENT_PLAN.md`) | 로드맵, ADR, Phase, 운영 관점 |
-| [`AGENTS.md`](../AGENTS.md) | 구현 강제 규칙 진입점(세부는 `.cursor/rules/*.mdc`) |
+| [`PRD.md`](./PRD.md) | 제품 요구사항 (무엇을·왜) |
+| [`TRD.md`](./TRD.md) | 기술 요구사항 (검증 가능한 구현·인터페이스 계약) |
+| [`AGENTS.md`](../../AGENTS.md) | 구현 강제 규칙 진입점(세부는 `.cursor/rules/*.mdc`) |
 | [`DATABASE_RULES.md`](./DATABASE_RULES.md) | PostgreSQL 명명(§0 산업 관행·§2 강제), 인덱스·제약조건, 모니터링 SQL |
 
-- 구현·보안·코드 구조가 상충하면 **`AGENTS.md` + `.cursor/rules/*.mdc`**를 따른다.
+- 구현·보안·코드 구조가 상충하면 **`AGENTS.md` + `.cursor/rules/*.mdc`**가 최우선. 제품·기술 요구 해석은 **`PRD.md` → `TRD.md` → 본 문서** 순으로 정렬한다.
 - DDL·인덱스·제약조건 이름·운영 점검 쿼리는 **`DATABASE_RULES.md`** §0·§2를 따른다. (Flyway 스크립트 작성 시 필수 참조)
 
 ---

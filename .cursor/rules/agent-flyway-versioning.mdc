@@ -37,4 +37,4 @@ alwaysApply: false
 - 컬럼 삭제는 코드 제거 이후 별도 단계로 분리한다.
 - `CREATE TABLE`에는 `IF NOT EXISTS`를 사용한다.
 - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`를 기본 컬럼으로 포함한다.
-- 객체 명명/인덱스/제약조건은 `docs/DATABASE_RULES.md`를 따른다.
+- 객체 명명/인덱스/제약조건은 `.cursor/docs/DATABASE_RULES.md`를 따른다.

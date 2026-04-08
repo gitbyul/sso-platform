@@ -15,4 +15,4 @@ alwaysApply: true
 # 문서 참조
 
 - 구현/보안/아키텍처 규칙: `AGENTS.md` + `.cursor/rules/*.mdc`
-- DDL 객체 명명/인덱스/제약/운영 점검: `docs/DATABASE_RULES.md`
+- DDL 객체 명명/인덱스/제약/운영 점검: `.cursor/docs/DATABASE_RULES.md`

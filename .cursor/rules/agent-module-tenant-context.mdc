@@ -18,4 +18,4 @@ alwaysApply: false
 # 데이터/마이그레이션
 
 - 버전 대역은 V1.x.x를 사용한다.
-- DDL 명명/인덱스/제약조건은 `docs/DATABASE_RULES.md`를 따른다.
+- DDL 명명/인덱스/제약조건은 `.cursor/docs/DATABASE_RULES.md`를 따른다.

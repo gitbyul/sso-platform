@@ -5,8 +5,9 @@
 ## 우선순위
 
 1. 보안/구현 규칙은 이 문서와 `.cursor/rules/*.mdc`를 따른다.
-2. DDL 객체 명명, 인덱스, 제약조건, 운영 점검은 `.cursor/rules/docs/DATABASE_RULES.md`를 따른다.
-3. 로드맵/일정 정보는 `.cursor/rules/docs/DEVELOPMENT_PLAN.md`를 참고한다.
+2. DDL 객체 명명, 인덱스, 제약조건, 운영 점검은 `.cursor/docs/DATABASE_RULES.md`를 따른다.
+3. 로드맵/일정 정보는 `.cursor/docs/DEVELOPMENT_PLAN.md`를 참고한다.
+4. 제품 요구사항은 `.cursor/docs/PRD.md`, 기술 요구사항(구현·검증 계약)은 `.cursor/docs/TRD.md`를 참고한다. (구현 규칙과 충돌 시 1번이 우선.)
 
 ## 기본 컨텍스트
 
