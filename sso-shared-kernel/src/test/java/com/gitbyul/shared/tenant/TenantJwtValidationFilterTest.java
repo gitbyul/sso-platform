@@ -36,10 +36,6 @@ class TenantJwtValidationFilterTest {
     void matchingTenantId_continuesChain() throws Exception {
         TenantContextHolder.set("acme-corp");
         ApplicationEventPublisher publisher = mock(ApplicationEventPublisher.class);
-        @SuppressWarnings("unchecked")
-        ObjectProvider<?> ms = mock(ObjectProvider.class);
-        @SuppressWarnings("unchecked")
-        ObjectProvider<?> lr = mock(ObjectProvider.class);
 
         TenantJwtValidationFilter filter =
                 new TenantJwtValidationFilter(
@@ -47,8 +43,8 @@ class TenantJwtValidationFilterTest {
                         objectMapper,
                         new RandomIdGenerator(),
                         new FixedTimeProvider(java.time.Instant.parse("2026-04-08T00:00:00Z")),
-                        (ObjectProvider) ms,
-                        (ObjectProvider) lr);
+                        emptyObjectProvider(),
+                        emptyObjectProvider());
 
         MockHttpServletRequest req = bearerWithTenant("acme-corp", "sub-1");
         MockHttpServletResponse res = new MockHttpServletResponse();
@@ -64,10 +60,6 @@ class TenantJwtValidationFilterTest {
     void mismatch_publishesAuditEventAnd403() throws Exception {
         TenantContextHolder.set("acme-corp");
         ApplicationEventPublisher publisher = mock(ApplicationEventPublisher.class);
-        @SuppressWarnings("unchecked")
-        ObjectProvider<?> ms = mock(ObjectProvider.class);
-        @SuppressWarnings("unchecked")
-        ObjectProvider<?> lr = mock(ObjectProvider.class);
 
         TenantJwtValidationFilter filter =
                 new TenantJwtValidationFilter(
@@ -75,8 +67,8 @@ class TenantJwtValidationFilterTest {
                         objectMapper,
                         new RandomIdGenerator(),
                         new FixedTimeProvider(java.time.Instant.parse("2026-04-08T00:00:00Z")),
-                        (ObjectProvider) ms,
-                        (ObjectProvider) lr);
+                        emptyObjectProvider(),
+                        emptyObjectProvider());
 
         MockHttpServletRequest req = bearerWithTenant("other-tenant", "sub-1");
         MockHttpServletResponse res = new MockHttpServletResponse();
@@ -87,7 +79,11 @@ class TenantJwtValidationFilterTest {
         assertThat(res.getStatus()).isEqualTo(403);
         ArgumentCaptor<AuditEvent> captor = ArgumentCaptor.forClass(AuditEvent.class);
         verify(publisher).publishEvent(captor.capture());
-        assertThat(captor.getValue().eventType()).isEqualTo("SECURITY.TENANT_MISMATCH");
+        AuditEvent event = captor.getValue();
+        assertThat(event.eventType()).isEqualTo("SECURITY.TENANT_MISMATCH");
+        assertThat(event.metadata())
+                .containsEntry("expectedTenantId", "acme-corp")
+                .containsEntry("jwtTenantId", "other-tenant");
     }
 
     private static MockHttpServletRequest bearerWithTenant(String tenantId, String sub) {
@@ -102,5 +98,15 @@ class TenantJwtValidationFilterTest {
         MockHttpServletRequest req = new MockHttpServletRequest();
         req.addHeader("Authorization", "Bearer " + token);
         return req;
+    }
+
+    /** Spring {@code ObjectProvider}에 정적 empty()가 없어, 테스트 전용으로 항상 비어 있는 제공자를 둔다. */
+    private static <T> ObjectProvider<T> emptyObjectProvider() {
+        return new ObjectProvider<>() {
+            @Override
+            public T getIfAvailable() {
+                return null;
+            }
+        };
     }
 }
