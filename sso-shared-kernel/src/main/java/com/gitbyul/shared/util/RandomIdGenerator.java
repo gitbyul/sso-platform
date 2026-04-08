@@ -17,11 +17,12 @@ public final class RandomIdGenerator {
         long randomA = ThreadLocalRandom.current().nextLong() & RANDOM_A_MASK; // 12 bits
         long randomB = ThreadLocalRandom.current().nextLong() & RANDOM_B_MASK; // 62 bits
 
-        // UUID v7:
+        // UUID v7 (RFC 9562):
         // - version: 4 bits (0111)
-        // - variant: 2 bits (10)
+        // - variant: 2 bits (10) — Java UUID.variant()==2 (RFC 4122)가 되도록 LSB 비트 62~63 고정
         long mostSignificantBits = (timestampMs << 16) | (0x7L << 12) | randomA;
         long leastSignificantBits = (randomB << 2) | 0x2L;
+        leastSignificantBits = (leastSignificantBits & ~(3L << 62)) | (2L << 62);
 
         return new UUID(mostSignificantBits, leastSignificantBits);
     }

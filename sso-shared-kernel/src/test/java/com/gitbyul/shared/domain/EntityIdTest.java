@@ -24,6 +24,7 @@ class EntityIdTest {
         EntityId id = EntityId.generate();
         UUID u = id.value();
         assertThat(u.version()).isEqualTo(7);
+        assertThat(u.variant()).isEqualTo(2);
     }
 
     @Test

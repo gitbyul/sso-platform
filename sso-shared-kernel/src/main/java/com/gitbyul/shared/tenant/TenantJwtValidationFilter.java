@@ -29,7 +29,7 @@ import java.util.UUID;
 /**
  * JWT {@code tenant_id} 클레임과 {@link TenantContextHolder} 값을 일치 검증.
  * <p>
- * 불일치 시 {@code 403} 및 감사 이벤트 {@code SECURITY.TENANT_MISMATCH} 발행.
+ * 불일치·JWT {@code tenant_id} 누락 시 {@code 403} 및 감사 이벤트 {@code SECURITY.TENANT_MISMATCH} 발행.
  */
 public class TenantJwtValidationFilter extends OncePerRequestFilter implements Ordered {
 
@@ -74,13 +74,21 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
         JsonNode jwtPayload = JwtBearerPayloadSupport.readPayload(objectMapper, request);
         String jwtTenantId = JwtBearerPayloadSupport.claimAsText(jwtPayload, TENANT_ID_CLAIM);
 
-        if (holderTenantId == null || jwtTenantId == null || jwtTenantId.equals(holderTenantId)) {
+        if (holderTenantId == null) {
             filterChain.doFilter(request, response);
             return;
         }
+        if (jwtPayload == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        if (jwtTenantId == null || !jwtTenantId.equals(holderTenantId)) {
+            publishTenantMismatchAuditEvent(request, jwtTenantId, holderTenantId, jwtPayload);
+            writeTenantMismatch(request, response);
+            return;
+        }
 
-        publishTenantMismatchAuditEvent(request, jwtTenantId, holderTenantId, jwtPayload);
-        writeTenantMismatch(request, response);
+        filterChain.doFilter(request, response);
     }
 
     private void writeTenantMismatch(HttpServletRequest request, HttpServletResponse response)
@@ -128,7 +136,12 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
 
         Map<String, String> metadata = new HashMap<>();
         metadata.put("expectedTenantId", holderTenantId);
-        metadata.put("jwtTenantId", jwtTenantId);
+        metadata.put("jwtTenantId", jwtTenantId != null ? jwtTenantId : "");
+        if (jwtTenantId == null) {
+            metadata.put("reason", "MISSING_TENANT_CLAIM");
+        }
+
+        String auditTenantId = jwtTenantId != null ? jwtTenantId : "";
 
         String actorType = "SERVICE";
         String result = "FAILURE";
@@ -142,7 +155,7 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
                 EVENT_VERSION,
                 now,
                 now,
-                jwtTenantId,
+                auditTenantId,
                 tenantDomain,
                 actorType,
                 actorId,
