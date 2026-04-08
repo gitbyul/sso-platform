@@ -6,6 +6,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @Testcontainers(disabledWithoutDocker = true)
 class FlywayMigrationIntegrationTest {
 
@@ -26,6 +28,8 @@ class FlywayMigrationIntegrationTest {
                                 POSTGRES.getPassword())
                         .locations("classpath:db/migration")
                         .load();
-        flyway.migrate();
+        var result = flyway.migrate();
+        assertThat(result.success).isTrue();
+        assertThat(result.migrationsExecuted).isGreaterThan(0);
     }
 }
