@@ -13,23 +13,40 @@ import java.util.Base64;
  */
 public final class JwtBearerPayloadSupport {
 
+    private static final String PAYLOAD_ATTRIBUTE =
+            JwtBearerPayloadSupport.class.getName() + ".JWT_PAYLOAD";
+    private static final Object NO_PAYLOAD = new Object();
+
     private JwtBearerPayloadSupport() {
     }
 
     public static JsonNode readPayload(ObjectMapper objectMapper, HttpServletRequest request) {
+        Object cached = request.getAttribute(PAYLOAD_ATTRIBUTE);
+        if (cached == NO_PAYLOAD) {
+            return null;
+        }
+        if (cached instanceof JsonNode jsonNode) {
+            return jsonNode;
+        }
+
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            request.setAttribute(PAYLOAD_ATTRIBUTE, NO_PAYLOAD);
             return null;
         }
         String token = authHeader.substring("Bearer ".length()).trim();
-        String[] parts = token.split("\\.");
+        String[] parts = token.split("\\.", 3);
         if (parts.length < 2) {
+            request.setAttribute(PAYLOAD_ATTRIBUTE, NO_PAYLOAD);
             return null;
         }
         try {
             byte[] decoded = Base64.getUrlDecoder().decode(parts[1]);
-            return objectMapper.readTree(decoded);
+            JsonNode payload = objectMapper.readTree(decoded);
+            request.setAttribute(PAYLOAD_ATTRIBUTE, payload);
+            return payload;
         } catch (Exception e) {
+            request.setAttribute(PAYLOAD_ATTRIBUTE, NO_PAYLOAD);
             return null;
         }
     }

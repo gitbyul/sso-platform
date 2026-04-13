@@ -29,7 +29,7 @@ import java.util.UUID;
 /**
  * JWT {@code tenant_id} 클레임과 {@link TenantContextHolder} 값을 일치 검증.
  * <p>
- * 불일치 시 {@code 403} 및 감사 이벤트 {@code SECURITY.TENANT_MISMATCH} 발행.
+ * 불일치·JWT {@code tenant_id} 누락 시 {@code 403} 및 감사 이벤트 {@code SECURITY.TENANT_MISMATCH} 발행.
  */
 public class TenantJwtValidationFilter extends OncePerRequestFilter implements Ordered {
 
@@ -71,16 +71,24 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String holderTenantId = TenantContextHolder.get();
-        JsonNode jwtPayload = JwtBearerPayloadSupport.readPayload(objectMapper, request);
-        String jwtTenantId = JwtBearerPayloadSupport.claimAsText(jwtPayload, TENANT_ID_CLAIM);
-
-        if (holderTenantId == null || jwtTenantId == null || jwtTenantId.equals(holderTenantId)) {
+        if (holderTenantId == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        publishTenantMismatchAuditEvent(request, jwtTenantId, holderTenantId, jwtPayload);
-        writeTenantMismatch(request, response);
+        JsonNode jwtPayload = JwtBearerPayloadSupport.readPayload(objectMapper, request);
+        if (jwtPayload == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        String jwtTenantId = JwtBearerPayloadSupport.claimAsText(jwtPayload, TENANT_ID_CLAIM);
+        if (jwtTenantId == null || !jwtTenantId.equals(holderTenantId)) {
+            publishTenantMismatchAuditEvent(request, jwtTenantId, holderTenantId, jwtPayload);
+            writeTenantMismatch(request, response);
+            return;
+        }
+
+        filterChain.doFilter(request, response);
     }
 
     private void writeTenantMismatch(HttpServletRequest request, HttpServletResponse response)
@@ -117,7 +125,7 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
             String holderTenantId,
             JsonNode jwtPayload) {
         Instant now = timeProvider.now();
-        UUID eventId = idGenerator.generateUuidV7();
+        UUID eventId = idGenerator.generateUuidV7(now);
 
         String tenantDomain = request.getServerName();
         String traceId = MDC.get("traceId");
@@ -125,10 +133,18 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
 
         String actorId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "sub");
         String targetId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "jti");
+        String clientId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "azp");
+        String sessionId = JwtBearerPayloadSupport.claimAsText(jwtPayload, "sid");
 
         Map<String, String> metadata = new HashMap<>();
         metadata.put("expectedTenantId", holderTenantId);
-        metadata.put("jwtTenantId", jwtTenantId);
+        metadata.put("jwtTenantId", jwtTenantId != null ? jwtTenantId : "");
+        if (jwtTenantId == null) {
+            metadata.put("reason", "MISSING_TENANT_CLAIM");
+        }
+
+        // 감사 스트림 소유·라우팅: 요청 컨텍스트 테넌트(holder). JWT 측 값은 metadata 로 보존.
+        String auditTenantId = holderTenantId;
 
         String actorType = "SERVICE";
         String result = "FAILURE";
@@ -142,7 +158,7 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
                 EVENT_VERSION,
                 now,
                 now,
-                jwtTenantId,
+                auditTenantId,
                 tenantDomain,
                 actorType,
                 actorId,
@@ -153,8 +169,8 @@ public class TenantJwtValidationFilter extends OncePerRequestFilter implements O
                 result,
                 failureReason,
                 traceId,
-                null,
-                null,
+                sessionId,
+                clientId,
                 userAgent,
                 null,
                 null,

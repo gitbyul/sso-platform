@@ -1,5 +1,7 @@
 package com.gitbyul.shared.util;
 
+import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -12,16 +14,19 @@ public final class RandomIdGenerator {
     private static final long RANDOM_B_MASK = (1L << 62) - 1; // 62 bits
 
     public UUID generateUuidV7() {
-        long timestampMs = System.currentTimeMillis() & 0xFFFFFFFFFFFFL; // 48 bits
+        return generateUuidV7(Instant.now());
+    }
+
+    public UUID generateUuidV7(Instant timestamp) {
+        Objects.requireNonNull(timestamp, "timestamp");
+        long timestampMs = timestamp.toEpochMilli() & 0xFFFFFFFFFFFFL; // 48 bits
 
         long randomA = ThreadLocalRandom.current().nextLong() & RANDOM_A_MASK; // 12 bits
         long randomB = ThreadLocalRandom.current().nextLong() & RANDOM_B_MASK; // 62 bits
 
-        // UUID v7:
-        // - version: 4 bits (0111)
-        // - variant: 2 bits (10)
+        // UUID v7 (RFC 9562): MSW에 version·rand_a, LSW 상위 2비트에 variant(10), 하위 62비트에 rand_b 전부.
         long mostSignificantBits = (timestampMs << 16) | (0x7L << 12) | randomA;
-        long leastSignificantBits = (randomB << 2) | 0x2L;
+        long leastSignificantBits = (2L << 62) | randomB;
 
         return new UUID(mostSignificantBits, leastSignificantBits);
     }
